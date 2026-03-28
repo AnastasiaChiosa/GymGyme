@@ -182,6 +182,7 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .sheet{background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 18px max(28px,env(safe-area-inset-bottom));width:100%;max-width:430px;border:0.5px solid var(--line2);border-bottom:none;animation:sheetUp .3s cubic-bezier(0.34,1.2,0.64,1);}
 @keyframes sheetUp{from{transform:translateY(40px);opacity:0;}to{transform:none;opacity:1;}}
 .sheet-title{font-size:17px;font-weight:700;color:var(--t0);margin-bottom:16px;letter-spacing:-0.3px;}
+.sheet-prev{margin-top:-10px;margin-bottom:16px;font-size:12px;color:var(--t2);line-height:1.45;}
 .f-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px;display:block;}
 .f-row{margin-bottom:14px;}
 .f-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
@@ -204,9 +205,16 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .login-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;}
 .login-card{border-radius:var(--r-lg);padding:20px 14px;border:1.5px solid transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;font-family:var(--font);transition:transform .15s,box-shadow .15s;}
 .login-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.3);}
+.login-card.pin-selected{box-shadow:0 0 0 2px rgba(255,255,255,0.14) inset,0 8px 24px rgba(0,0,0,0.3);transform:translateY(-2px);}
 .login-av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;}
 .login-name{font-size:15px;font-weight:700;}
 .login-prog{font-size:11px;opacity:.6;}
+.pin-box{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;}
+.pin-input{width:100%;padding:12px 14px;font-size:18px;letter-spacing:4px;text-align:center;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);color:var(--t0);font-family:var(--font);outline:none;}
+.pin-input:focus{border-color:var(--accent);}
+.pin-btn{padding:12px;border:none;border-radius:var(--r-sm);background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.pin-btn:disabled{opacity:.45;cursor:not-allowed;}
+.pin-msg{min-height:18px;font-size:12px;text-align:center;color:var(--red);}
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(6px);display:flex;align-items:flex-end;justify-content:center;z-index:80;}
@@ -275,6 +283,7 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 <div class="sheet-overlay" id="move-sheet">
   <div class="sheet">
     <div class="sheet-title" id="sheet-move-name"></div>
+    <div class="sheet-prev" id="sheet-prev-info"></div>
     <div class="f-grid">
       <div><label class="f-label">Set</label><input class="f-input" id="f-sets" type="number" placeholder="3" min="1" max="20"></div>
       <div><label class="f-label">Tekrar</label><input class="f-input" id="f-reps" type="number" placeholder="10" min="1" max="100"></div>
@@ -329,8 +338,8 @@ const PROGRAMS = {
 };
 
 const USERS = {
-  me:    {id:"user_me",    name:"Sen",     pset:"C",color:"#7c6af7",clight:"rgba(124,106,247,0.15)",initials:"S"},
-  friend:{id:"user_friend",name:"Arkadaş",pset:"A",color:"#3ecf8e",clight:"rgba(62,207,142,0.15)", initials:"A"}
+  me:    {id:"user_me",    name:"C", pset:"C",color:"#7c6af7",clight:"rgba(124,106,247,0.15)",initials:"S"},
+  friend:{id:"user_friend",name:"A", pset:"A",color:"#3ecf8e",clight:"rgba(62,207,142,0.15)", initials:"A"}
 };
 
 let currentUser = localStorage.getItem('gg_user')||null;
@@ -339,6 +348,12 @@ let allCheckins={}, allNotifs=[], unreadNotifs=0;
 let session=null, formMoveIdx=null, formDiff='medium';
 let toastedNotifIds = new Set(JSON.parse(localStorage.getItem('gg_toasted')||'[]'));
 let prRecords = JSON.parse(localStorage.getItem('gg_prs')||'{}');
+const APP_PIN='2003';
+const PIN_OK_KEY='gg_pin_ok';
+const PIN_LOCK_KEY='gg_pin_lock_until';
+let pinAttempts=0;
+let pinTimer=null;
+let pinSelectedUser='me';
 
 function savePRs(){localStorage.setItem('gg_prs',JSON.stringify(prRecords));}
 function saveToasted(){localStorage.setItem('gg_toasted',JSON.stringify([...toastedNotifIds]));}
@@ -428,7 +443,11 @@ function renderCurrent(){
 /* ── HOME ── */
 function renderHome(){
   const el=document.getElementById('app');
-  if(!currentUser){renderLogin();return;}
+  if(!currentUser){
+    if(localStorage.getItem(PIN_OK_KEY)==='1')renderLogin();
+    else renderPinGate();
+    return;
+  }
   const u=USERS[currentUser],friend=currentUser==='me'?USERS.friend:USERS.me;
   const today=todayKey(),myCI=getUserCI(today,u.id),frCI=getUserCI(today,friend.id);
   const myStreak=calcStreak(u.id),frStreak=calcStreak(friend.id);
@@ -482,6 +501,86 @@ function renderLogin(){
         </button>`).join('')}
     </div>
   </div>`;
+}
+
+function getPinLockLeftMs(){
+  const until=parseInt(localStorage.getItem(PIN_LOCK_KEY)||'0',10);
+  return Math.max(0,until-Date.now());
+}
+
+function renderPinGate(msg=''){
+  if(pinTimer){clearInterval(pinTimer);pinTimer=null;}
+  const leftMs=getPinLockLeftMs();
+  const isLocked=leftMs>0;
+  const leftSec=Math.ceil(leftMs/1000);
+  document.getElementById('app').innerHTML=`<div class="login-wrap">
+    <div class="login-mark">🔒</div>
+    <div class="login-title">PIN Girişi</div>
+    <div class="login-sub">Önce kullanıcı seç, sonra PIN gir.</div>
+    <div class="login-grid">
+      ${Object.entries(USERS).map(([k,u])=>`
+        <button class="login-card ${pinSelectedUser===k?'pin-selected':''}" style="background:${u.clight};border-color:${u.color}55;color:${u.color}" onclick="G.selectPinUser('${k}')" ${isLocked?'disabled':''}>
+          <div class="login-av" style="background:${u.color};color:#fff">${u.initials}</div>
+          <div class="login-name" style="color:#fff">${u.name}</div>
+          <div class="login-prog">${u.pset} programları</div>
+        </button>`).join('')}
+    </div>
+    <div class="pin-box">
+      <input class="pin-input" id="pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="••••" ${isLocked?'disabled':''}>
+      <button class="pin-btn" id="pin-btn" onclick="G.submitPin()" ${isLocked?'disabled':''}>Onayla</button>
+      <div class="pin-msg" id="pin-msg">${isLocked?`Hatalı PIN. ${leftSec} sn sonra tekrar dene.`:msg}</div>
+    </div>
+  </div>`;
+  const pinInput=document.getElementById('pin-input');
+  if(pinInput){
+    pinInput.focus();
+    pinInput.addEventListener('keydown',e=>{if(e.key==='Enter')G.submitPin();});
+  }
+  if(isLocked){
+    pinTimer=setInterval(()=>{
+      const left=getPinLockLeftMs();
+      const msgEl=document.getElementById('pin-msg');
+      if(msgEl)msgEl.textContent=`Hatalı PIN. ${Math.ceil(left/1000)} sn sonra tekrar dene.`;
+      if(left<=0){
+        clearInterval(pinTimer);
+        pinTimer=null;
+        renderPinGate();
+      }
+    },1000);
+  }
+}
+
+function selectPinUser(k){
+  pinSelectedUser=k;
+  renderPinGate();
+}
+
+function submitPin(){
+  const leftMs=getPinLockLeftMs();
+  if(leftMs>0){
+    renderPinGate(`Hatalı PIN. ${Math.ceil(leftMs/1000)} sn sonra tekrar dene.`);
+    return;
+  }
+  if(!pinSelectedUser||!USERS[pinSelectedUser]){
+    renderPinGate('Önce kullanıcı seç.');
+    return;
+  }
+  const val=(document.getElementById('pin-input')?.value||'').trim();
+  if(val===APP_PIN){
+    localStorage.setItem(PIN_OK_KEY,'1');
+    pinAttempts=0;
+    G.setUser(pinSelectedUser);
+    return;
+  }
+  pinAttempts++;
+  if(pinAttempts>=3){
+    const until=Date.now()+30000;
+    localStorage.setItem(PIN_LOCK_KEY,String(until));
+    pinAttempts=0;
+    renderPinGate('Hatalı PIN. 30 saniye kilitlendi.');
+    return;
+  }
+  renderPinGate('Hatalı PIN');
 }
 
 /* ── WORKOUT ── */
@@ -755,14 +854,31 @@ async function finishSession(){
 function openSheet(idx){
   formMoveIdx=idx;
   const m=session.moves[idx];
+  const u=USERS[currentUser];
+  const prKey=u.id+'_'+m.name;
+  const userHistory=getCIForUser(u.id)
+    .filter(ci=>Array.isArray(ci.moves)&&ci.moves.some(x=>x.name===m.name))
+    .sort((a,b)=>b.dateKey.localeCompare(a.dateKey));
+  const lastMove=userHistory.length?userHistory[0].moves.find(x=>x.name===m.name):null;
   document.getElementById('sheet-move-name').textContent=m.name;
+  const prevEl=document.getElementById('sheet-prev-info');
+  if(prevEl){
+    if(lastMove){
+      const lastWeight=(lastMove.weight!==null&&lastMove.weight!==undefined&&lastMove.weight!=='')?` · ${lastMove.weight}kg`:'';
+      const prVal=prRecords[prKey];
+      prevEl.innerHTML=`<div>Geçen: ${lastMove.sets}×${lastMove.reps}${lastWeight}</div><div>PR: ${prVal!==undefined?prVal+'kg':'-'}</div>`;
+      prevEl.style.display='block';
+    }else{
+      prevEl.innerHTML='';
+      prevEl.style.display='none';
+    }
+  }
   document.getElementById('f-sets').value=m.sets||'';
   document.getElementById('f-reps').value=m.reps||'';
   document.getElementById('f-weight').value=m.weight||'';
   formDiff=m.diff||'medium';
   G.selDiff(formDiff);
   document.getElementById('move-sheet').classList.add('open');
-  const u=USERS[currentUser];
   const btn=document.getElementById('f-save-btn');if(btn)btn.style.background=u.color;
 }
 function closeSheet(){document.getElementById('move-sheet').classList.remove('open');}
@@ -797,7 +913,7 @@ window.G={
   chMonth(d){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+d,1);renderCalendar();},
   showDay,closeModal(){document.getElementById('modal-root').innerHTML='';},
   startSession,cancelSession,clearSession,finishSession,
-  openSheet,closeSheet,selDiff,saveMove,
+  openSheet,closeSheet,selDiff,saveMove,submitPin,selectPinUser,
 };
 
 listenAll();

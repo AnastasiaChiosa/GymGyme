@@ -607,6 +607,7 @@ function renderWorkout(){
           <div class="diff-tag ${m.diff}">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
         </div>`).join('')}
       </div></div>
+      <button class="btn-ghost" onclick="G.openHistoryEntry()">Geçmiş antrenman gir</button>
       <button class="btn-danger" onclick="G.clearSession()">Antrenmanı sıfırla</button>
     </div>`;
     return;
@@ -624,17 +625,20 @@ function renderWorkout(){
           </div>
           <div class="pc-arrow">›</div>
         </div>`).join('')}
+      <button class="btn-ghost" onclick="G.openHistoryEntry()">Geçmiş antrenman gir</button>
     </div>`;
     return;
   }
 
   const program=PROGRAMS[u.pset][session.programId];
   const doneCount=session.moves.filter(m=>m.done).length;
+  const sessionDate=session.dateKey||today;
+  const dateLabel=sessionDate===today?'Bugün':sessionDate;
   el.innerHTML=`<div class="page">
     <div class="session-hdr">
       <div>
         <div class="sh-title" style="color:${u.color}">${session.programId}</div>
-        <div class="sh-sub">${doneCount}/${program.moves.length} hareket tamamlandı</div>
+        <div class="sh-sub">${dateLabel} · ${doneCount}/${program.moves.length} hareket tamamlandı</div>
       </div>
       <button class="sh-finish" style="background:${u.color}" onclick="G.finishSession()" ${doneCount===0?'disabled':''}>Bitir</button>
     </div>
@@ -809,11 +813,50 @@ function showDay(dk){
   document.getElementById('modal-root').innerHTML=html;
 }
 
-function startSession(pid){
+function startSession(pid,dateKey=todayKey()){
   const u=USERS[currentUser],p=PROGRAMS[u.pset][pid];
-  session={programId:pid,moves:p.moves.map(name=>({name,done:false,sets:null,reps:null,weight:null,diff:'medium'}))};
+  session={programId:pid,dateKey,moves:p.moves.map(name=>({name,done:false,sets:null,reps:null,weight:null,diff:'medium'}))};
   renderWorkout();
 }
+
+function openHistoryEntry(){
+  if(!currentUser)return;
+  const u=USERS[currentUser];
+  const today=todayKey();
+  const options=Object.keys(PROGRAMS[u.pset]).map(pid=>`<option value="${pid}">${pid}</option>`).join('');
+  const html=`<div class="modal-overlay" onclick="G.closeModal()"><div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Geçmiş antrenman gir</div>
+    <div class="f-row">
+      <label class="f-label">Tarih</label>
+      <input class="f-input" id="hist-date" type="date" max="${today}" value="${today}">
+    </div>
+    <div class="f-row">
+      <label class="f-label">Program</label>
+      <select class="f-input" id="hist-program">${options}</select>
+    </div>
+    <div class="f-actions">
+      <button class="f-cancel" onclick="G.closeModal()">İptal</button>
+      <button class="f-save" style="background:${u.color}" onclick="G.startHistorySession()">Antrenmanı Aç</button>
+    </div>
+  </div></div>`;
+  document.getElementById('modal-root').innerHTML=html;
+}
+
+function startHistorySession(){
+  if(!currentUser)return;
+  const u=USERS[currentUser];
+  const dateInput=document.getElementById('hist-date');
+  const programInput=document.getElementById('hist-program');
+  const dk=(dateInput?.value||'').trim();
+  const pid=(programInput?.value||'').trim();
+  if(!dk||!pid){alert('Tarih ve program seçiniz.');return;}
+  if(dk>todayKey()){alert('Gelecek tarih seçilemez.');return;}
+  const existing=getUserCI(dk,u.id);
+  if(existing&&!confirm(dk+' tarihindeki mevcut antrenman üzerine yazılacak. Devam edilsin mi?'))return;
+  G.closeModal();
+  startSession(pid,dk);
+}
+
 function cancelSession(){session=null;renderWorkout();}
 async function clearSession(){
   if(!confirm("Antrenmanı sıfırlamak istediğine emin misin?"))return;
@@ -823,6 +866,7 @@ async function clearSession(){
 }
 async function finishSession(){
   const u=USERS[currentUser],today=todayKey();
+  const saveDate=session?.dateKey||today;
   const doneMoves=session.moves.filter(m=>m.done);
   if(!doneMoves.length)return;
   const friend=currentUser==='me'?USERS.friend:USERS.me;
@@ -844,10 +888,10 @@ async function finishSession(){
       }
     }
   });
-  const data={userId:u.id,userName:u.name,programId:session.programId,dateKey:today,
+  const data={userId:u.id,userName:u.name,programId:session.programId,dateKey:saveDate,
     moves:doneMoves.map(m=>({name:m.name,sets:m.sets,reps:m.reps,weight:m.weight,diff:m.diff})),
     createdAt:new Date().toISOString()};
-  await saveCheckin(today,data);
+  await saveCheckin(saveDate,data);
   for(const n of prNotifs)await saveNotif(n);
   session=null;G.nav('home');
 }
@@ -912,7 +956,7 @@ window.G={
   },
   chMonth(d){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+d,1);renderCalendar();},
   showDay,closeModal(){document.getElementById('modal-root').innerHTML='';},
-  startSession,cancelSession,clearSession,finishSession,
+  startSession,cancelSession,clearSession,finishSession,openHistoryEntry,startHistorySession,
   openSheet,closeSheet,selDiff,saveMove,submitPin,selectPinUser,
 };
 

@@ -257,6 +257,10 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 
 /* PROGRESS CHART */
 .chart-select{width:100%;padding:9px 13px;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);color:var(--t1);font-family:var(--font);font-size:13px;margin-bottom:12px;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;cursor:pointer;}
+.chart-controls{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.chart-range-tabs{display:flex;gap:6px;}
+.chart-range-btn{flex:1;padding:6px 0;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);color:var(--t3);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;}
+.chart-range-btn.active{background:var(--abg);border-color:var(--accent);color:var(--accent2);}
 .chart-wrap{border-radius:var(--r-sm);overflow:visible;margin-bottom:10px;}
 .chart-latest{font-size:12px;color:var(--t2);text-align:right;}
 .chart-latest strong{font-weight:700;}
@@ -389,6 +393,7 @@ let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
 let session=null, formMoveIdx=null, formDiff='medium', formWarmup=false;
 let chartExercise={};
+let chartRange={me:'all',friend:'all'};
 let toastedNotifIds = new Set(JSON.parse(localStorage.getItem('gg_toasted')||'[]'));
 let prRecords = JSON.parse(localStorage.getItem('gg_prs')||'{}');
 const APP_PIN='2003';
@@ -520,10 +525,18 @@ function getExerciseList(uid){
   getCIForUser(uid).forEach(ci=>(ci.moves||[]).forEach(m=>{if(parseFloat(m.weight)>0)names.add(m.name);}));
   return[...names].sort();
 }
-function getExerciseHistory(uid,moveName){
+function getExerciseHistory(uid,moveName,range){
+  const now=new Date();
+  let cutoff=null;
+  if(range==='week'){cutoff=new Date(now);cutoff.setDate(now.getDate()-7);}
+  else if(range==='year'){cutoff=new Date(now);cutoff.setFullYear(now.getFullYear()-1);}
   return getCIForUser(uid)
-    .filter(ci=>Array.isArray(ci.moves)&&ci.moves.some(m=>m.name===moveName&&parseFloat(m.weight)>0))
-    .sort((a,b)=>a.dateKey.localeCompare(b.dateKey)).slice(-12)
+    .filter(ci=>{
+      if(!Array.isArray(ci.moves)||!ci.moves.some(m=>m.name===moveName&&parseFloat(m.weight)>0))return false;
+      if(cutoff&&new Date(ci.dateKey+'T12:00:00')<cutoff)return false;
+      return true;
+    })
+    .sort((a,b)=>a.dateKey.localeCompare(b.dateKey))
     .map(ci=>({dateKey:ci.dateKey,weight:parseFloat(ci.moves.find(m=>m.name===moveName).weight)}))
     .filter(p=>p.weight>0);
 }
@@ -532,9 +545,12 @@ function renderProgressChart(uid,color,userKey){
   if(!exercises.length)return'<div class="card-pad"><div class="empty-msg" style="padding:16px 0">Henüz ağırlık kaydı yok.</div></div>';
   if(!chartExercise[userKey])chartExercise[userKey]=exercises[0];
   const selected=chartExercise[userKey];
-  const points=getExerciseHistory(uid,selected);
+  const range=chartRange[userKey]||'all';
+  const points=getExerciseHistory(uid,selected,range);
   const dropdown=`<select class="chart-select" onchange="G.setChartExercise('${userKey}',this.value)">${exercises.map(e=>`<option value="${e}"${e===selected?' selected':''}>${e}</option>`).join('')}</select>`;
-  if(points.length<2)return`<div class="card-pad">${dropdown}<div class="empty-msg" style="padding:16px 0">Bu hareket için yeterli veri yok.<br>En az 2 kayıt gerekli.</div></div>`;
+  const rangeTabs=[['week','1 Hafta'],['year','1 Yıl'],['all','Tümü']].map(([r,lbl])=>`<button class="chart-range-btn${r===range?' active':''}" onclick="G.setChartRange('${userKey}','${r}')">${lbl}</button>`).join('');
+  const controls=`<div class="chart-controls">${dropdown}<div class="chart-range-tabs">${rangeTabs}</div></div>`;
+  if(points.length<2)return`<div class="card-pad">${controls}<div class="empty-msg" style="padding:16px 0">Bu aralıkta yeterli veri yok.<br>En az 2 kayıt gerekli.</div></div>`;
   const W=340,H=140,PAD={top:12,right:12,bottom:32,left:36};
   const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
   const weights=points.map(p=>p.weight);
@@ -551,9 +567,10 @@ function renderProgressChart(uid,color,userKey){
   const diff=(last.weight-first.weight).toFixed(1);
   const trendClass=last.weight>first.weight?'up':last.weight<first.weight?'down':'flat';
   const trendTxt=last.weight>first.weight?`▲ ${diff}kg`:last.weight<first.weight?`▼ ${Math.abs(diff)}kg`:'— Sabit';
-  return`<div class="card-pad">${dropdown}<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">${yLabels.map(l=>`<line x1="${PAD.left}" y1="${l.y.toFixed(1)}" x2="${W-PAD.right}" y2="${l.y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/><text x="${PAD.left-4}" y="${(l.y+4).toFixed(1)}" font-size="9" fill="var(--t3)" text-anchor="end">${l.val}</text>`).join('')}<path d="${areaD}" fill="${color}" opacity="0.08"/><polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${color}" stroke="var(--bg2)" stroke-width="1.5"/>${xIdx.includes(i)?`<text x="${c.x.toFixed(1)}" y="${H-4}" font-size="9" fill="var(--t3)" text-anchor="middle">${fmtD(c.dateKey)}</text>`:''}`).join('')}</svg></div><div class="chart-latest">Son: <strong style="color:${color}">${last.weight}kg</strong><span class="chart-trend ${trendClass}">${trendTxt}</span> · ${points.length} kayıt</div></div>`;
+  return`<div class="card-pad">${controls}<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">${yLabels.map(l=>`<line x1="${PAD.left}" y1="${l.y.toFixed(1)}" x2="${W-PAD.right}" y2="${l.y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/><text x="${PAD.left-4}" y="${(l.y+4).toFixed(1)}" font-size="9" fill="var(--t3)" text-anchor="end">${l.val}</text>`).join('')}<path d="${areaD}" fill="${color}" opacity="0.08"/><polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${color}" stroke="var(--bg2)" stroke-width="1.5"/>${xIdx.includes(i)?`<text x="${c.x.toFixed(1)}" y="${H-4}" font-size="9" fill="var(--t3)" text-anchor="middle">${fmtD(c.dateKey)}</text>`:''}`).join('')}</svg></div><div class="chart-latest">Son: <strong style="color:${color}">${last.weight}kg</strong><span class="chart-trend ${trendClass}">${trendTxt}</span> · ${points.length} kayıt</div></div>`;
 }
 function setChartExercise(userKey,exerciseName){chartExercise[userKey]=exerciseName;renderStats();}
+function setChartRange(userKey,range){chartRange[userKey]=range;renderStats();}
 function toggleWarmup(){
   formWarmup=!formWarmup;
   const inputs=document.getElementById('warmup-inputs');
@@ -586,7 +603,6 @@ function renderHome(){
   const today=todayKey(),myCI=getUserCI(today,u.id),frCI=getUserCI(today,friend.id);
   const myStreak=calcStreak(u.id),frStreak=calcStreak(friend.id);
   const myWeek=calcWeek(u.id),frWeek=calcWeek(friend.id);
-  const myVol=calcWeekVolume(u.id),frVol=calcWeekVolume(friend.id);
   el.innerHTML=`<div class="page">
     <div class="hero" style="--hero-bg:linear-gradient(135deg,${u.color}99 0%,${u.color} 100%)">
       <div class="hero-glow"></div>
@@ -618,25 +634,6 @@ function renderHome(){
       <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWeek}</div><div class="stat-l">${friend.name}'ın günü</div></div>
       <div class="stat-box"><div class="stat-n" style="color:${myStreak>=frStreak?u.color:friend.color}">${Math.max(myStreak,frStreak)}</div><div class="stat-l">max streak</div></div>
     </div>
-    <div class="sec-label">Haftalık Özet</div>
-    <div class="card"><div class="card-pad">
-      <div class="card-title">Bu Haftanın Hacmi</div>
-      <div class="week-summary-grid">
-        <div class="wsb">
-          <div class="wsb-av" style="background:${u.clight};color:${u.color}">${u.initials}</div>
-          <div class="wsb-n" style="color:${u.color}">${myVol.volume.toLocaleString('tr-TR')}</div>
-          <div class="wsb-l">kg hacim</div>
-          <div class="wsb-sub">${myVol.sets} set</div>
-        </div>
-        <div class="wsb-sep"></div>
-        <div class="wsb">
-          <div class="wsb-av" style="background:${friend.clight};color:${friend.color}">${friend.initials}</div>
-          <div class="wsb-n" style="color:${friend.color}">${frVol.volume.toLocaleString('tr-TR')}</div>
-          <div class="wsb-l">kg hacim</div>
-          <div class="wsb-sub">${frVol.sets} set</div>
-        </div>
-      </div>
-    </div></div>
     <button class="switch-link" onclick="G.setUser(null)">Kullanıcı değiştir</button>
   </div>`;
 }
@@ -890,11 +887,10 @@ function renderStats(){
     </div>
     ${rows.map(r=>`
       <div class="sec-label" style="color:${r.u.color}">${r.u.name}</div>
-      <div class="stat-big-row-4">
+      <div class="stat-big-row">
         <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.streak}</div><div class="sbb-l">streak</div></div>
         <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.maxStreak}</div><div class="sbb-l">en uzun</div></div>
         <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.week}</div><div class="sbb-l">bu hafta</div></div>
-        <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.totalSets}</div><div class="sbb-l">toplam set</div></div>
       </div>
       ${r.topP?`<div class="stat-row-item"><span class="sri-lbl">En çok yapılan program</span><span class="sri-val" style="color:${r.u.color}">${r.topP[0]} (${r.topP[1]}×)</span></div>`:''}
       ${r.top3.length?`<div class="card"><div class="card-pad"><div class="card-title">En çok yapılan hareketler</div>
@@ -1143,7 +1139,7 @@ window.G={
   showDay,closeModal(){document.getElementById('modal-root').innerHTML='';},
   startSession,cancelSession,clearSession,finishSession,openHistoryEntry,startHistorySession,
   openSheet,closeSheet,selDiff,saveMove,submitPin,selectPinUser,
-  toggleWarmup,setChartExercise,
+  toggleWarmup,setChartExercise,setChartRange,
 };
 
 listenAll();

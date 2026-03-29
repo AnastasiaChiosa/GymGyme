@@ -358,10 +358,27 @@ let pinSelectedUser='me';
 function savePRs(){localStorage.setItem('gg_prs',JSON.stringify(prRecords));}
 function saveToasted(){localStorage.setItem('gg_toasted',JSON.stringify([...toastedNotifIds]));}
 
+function rebuildPRsFromCheckins(){
+  const next={};
+  Object.values(allCheckins).forEach(ci=>{
+    if(!ci||!ci.userId||!Array.isArray(ci.moves))return;
+    ci.moves.forEach(m=>{
+      if(!m||!m.name)return;
+      const w=parseFloat(m.weight);
+      if(!Number.isFinite(w)||w<=0)return;
+      const k=ci.userId+'_'+m.name;
+      next[k]=Math.max(next[k]||0,w);
+    });
+  });
+  prRecords=next;
+  savePRs();
+}
+
 function checkPR(uid,moveName,weight){
-  if(!weight)return false;
+  const w=parseFloat(weight);
+  if(!Number.isFinite(w)||w<=0)return false;
   const k=uid+'_'+moveName, prev=prRecords[k]||0;
-  if(weight>prev){prRecords[k]=weight;savePRs();return{old:prev,new:weight};}
+  if(w>prev){prRecords[k]=w;savePRs();return{old:prev,new:w};}
   return false;
 }
 
@@ -373,6 +390,7 @@ function listenAll(){
   onSnapshot(collection(db,"checkins"),snap=>{
     allCheckins={};
     snap.forEach(d=>{const data=d.data();allCheckins[data.dateKey+"_"+data.userId]=data;});
+    rebuildPRsFromCheckins();
     renderCurrent();
   });
   onSnapshot(collection(db,"notifs"),snap=>{
@@ -650,7 +668,7 @@ function renderWorkout(){
         return `<div class="move-row ${m.done?'done':''}" onclick="G.openSheet(${i})">
           <div class="move-chk">${m.done?`<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>`:''}</div>
           <div class="mr-right">
-            <div class="mr-name">${name}${prVal?`<span class="pr-badge">🏆 ${prVal}kg</span>`:''}</div>
+            <div class="mr-name">${name}${prVal>0?`<span class="pr-badge">🏆 ${prVal}kg</span>`:''}</div>
             ${m.done
               ?`<div class="mr-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''} · <span class="diff-tag ${m.diff}" style="padding:1px 5px;font-size:9px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</span></div>`
               :`<div class="mr-meta hint">Detay gir →</div>`}
@@ -714,7 +732,11 @@ function renderStats(){
     const totalSets=allMoves.reduce((s,m)=>s+(parseInt(m.sets)||0),0);
     const pcs={};cis.forEach(c=>{pcs[c.programId]=(pcs[c.programId]||0)+1;});
     const topP=Object.entries(pcs).sort((a,b)=>b[1]-a[1])[0];
-    const prs=Object.entries(prRecords).filter(([k])=>k.startsWith(u.id+'_')).map(([k,v])=>({name:k.replace(u.id+'_',''),w:v})).sort((a,b)=>b.w-a.w).slice(0,4);
+    const prs=Object.entries(prRecords)
+      .filter(([k,v])=>k.startsWith(u.id+'_')&&Number.isFinite(v)&&v>0)
+      .map(([k,v])=>({name:k.replace(u.id+'_',''),w:v}))
+      .sort((a,b)=>b.w-a.w)
+      .slice(0,4);
     return{u,cis,streak,week,allMoves,top3,totalSets,topP,prs};
   });
   el.innerHTML=`<div class="page">
@@ -910,7 +932,7 @@ function openSheet(idx){
     if(lastMove){
       const lastWeight=(lastMove.weight!==null&&lastMove.weight!==undefined&&lastMove.weight!=='')?` · ${lastMove.weight}kg`:'';
       const prVal=prRecords[prKey];
-      prevEl.innerHTML=`<div>Geçen: ${lastMove.sets}×${lastMove.reps}${lastWeight}</div><div>PR: ${prVal!==undefined?prVal+'kg':'-'}</div>`;
+      prevEl.innerHTML=`<div>Geçen: ${lastMove.sets}×${lastMove.reps}${lastWeight}</div><div>PR: ${prVal>0?prVal+'kg':'-'}</div>`;
       prevEl.style.display='block';
     }else{
       prevEl.innerHTML='';

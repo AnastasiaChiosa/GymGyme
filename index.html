@@ -268,6 +268,9 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .chart-trend.up{background:var(--gbg);color:var(--green);}
 .chart-trend.down{background:var(--rbg);color:var(--red);}
 .chart-trend.flat{background:var(--bg3);color:var(--t3);}
+.chart-tip{position:fixed;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);padding:7px 11px;text-align:center;pointer-events:none;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:none;min-width:64px;}
+.ct-weight{font-size:15px;font-weight:700;line-height:1.2;}
+.ct-date{font-size:11px;color:var(--t3);margin-top:2px;}
 </style>
 </head>
 <body>
@@ -567,10 +570,23 @@ function renderProgressChart(uid,color,userKey){
   const diff=(last.weight-first.weight).toFixed(1);
   const trendClass=last.weight>first.weight?'up':last.weight<first.weight?'down':'flat';
   const trendTxt=last.weight>first.weight?`▲ ${diff}kg`:last.weight<first.weight?`▼ ${Math.abs(diff)}kg`:'— Sabit';
-  return`<div class="card-pad">${controls}<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">${yLabels.map(l=>`<line x1="${PAD.left}" y1="${l.y.toFixed(1)}" x2="${W-PAD.right}" y2="${l.y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/><text x="${PAD.left-4}" y="${(l.y+4).toFixed(1)}" font-size="9" fill="var(--t3)" text-anchor="end">${l.val}</text>`).join('')}<path d="${areaD}" fill="${color}" opacity="0.08"/><polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${color}" stroke="var(--bg2)" stroke-width="1.5"/>${xIdx.includes(i)?`<text x="${c.x.toFixed(1)}" y="${H-4}" font-size="9" fill="var(--t3)" text-anchor="middle">${fmtD(c.dateKey)}</text>`:''}`).join('')}</svg></div><div class="chart-latest">Son: <strong style="color:${color}">${last.weight}kg</strong><span class="chart-trend ${trendClass}">${trendTxt}</span> · ${points.length} kayıt</div></div>`;
+  return`<div class="card-pad">${controls}<div class="chart-wrap"><svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;overflow:visible">${yLabels.map(l=>`<line x1="${PAD.left}" y1="${l.y.toFixed(1)}" x2="${W-PAD.right}" y2="${l.y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/><text x="${PAD.left-4}" y="${(l.y+4).toFixed(1)}" font-size="9" fill="var(--t3)" text-anchor="end">${l.val}</text>`).join('')}<path d="${areaD}" fill="${color}" opacity="0.08"/><polyline points="${polyPts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>${coords.map((c,i)=>`<circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="3.5" fill="${color}" stroke="var(--bg2)" stroke-width="1.5" pointer-events="none"/><circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="12" fill="transparent" style="cursor:pointer" onmouseenter="G.showChartTip(this,'${c.dateKey}',${c.weight},'${color}')" onmouseleave="G.hideChartTip()" ontouchstart="G.showChartTip(this,'${c.dateKey}',${c.weight},'${color}');event.preventDefault()" ontouchend="setTimeout(G.hideChartTip,1200)"/>${xIdx.includes(i)?`<text x="${c.x.toFixed(1)}" y="${H-4}" font-size="9" fill="var(--t3)" text-anchor="middle">${fmtD(c.dateKey)}</text>`:''}`).join('')}</svg></div><div class="chart-latest">Son: <strong style="color:${color}">${last.weight}kg</strong><span class="chart-trend ${trendClass}">${trendTxt}</span> · ${points.length} kayıt</div></div>`;
 }
 function setChartExercise(userKey,exerciseName){chartExercise[userKey]=exerciseName;renderStats();}
 function setChartRange(userKey,range){chartRange[userKey]=range;renderStats();}
+function showChartTip(el,dateKey,weight,color){
+  let tip=document.getElementById('chart-tip');
+  if(!tip){tip=document.createElement('div');tip.id='chart-tip';tip.className='chart-tip';document.body.appendChild(tip);}
+  const months=['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'];
+  const[,m,d]=dateKey.split('-');
+  tip.innerHTML=`<div class="ct-weight" style="color:${color}">${weight}kg</div><div class="ct-date">${parseInt(d)} ${months[parseInt(m)-1]}</div>`;
+  tip.style.display='block';
+  const r=el.getBoundingClientRect();
+  const tw=tip.offsetWidth||70;
+  tip.style.left=`${r.left+r.width/2-tw/2}px`;
+  tip.style.top=`${r.top-58}px`;
+}
+function hideChartTip(){const tip=document.getElementById('chart-tip');if(tip)tip.style.display='none';}
 function toggleWarmup(){
   formWarmup=!formWarmup;
   const inputs=document.getElementById('warmup-inputs');
@@ -1139,7 +1155,7 @@ window.G={
   showDay,closeModal(){document.getElementById('modal-root').innerHTML='';},
   startSession,cancelSession,clearSession,finishSession,openHistoryEntry,startHistorySession,
   openSheet,closeSheet,selDiff,saveMove,submitPin,selectPinUser,
-  toggleWarmup,setChartExercise,setChartRange,
+  toggleWarmup,setChartExercise,setChartRange,showChartTip,hideChartTip,
 };
 
 listenAll();

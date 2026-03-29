@@ -254,6 +254,13 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .mr-warmup{font-size:11px;color:var(--t2);margin-top:3px;}
 .warmup-toggle{width:100%;padding:9px 13px;background:var(--bg3);border:0.5px dashed var(--line2);border-radius:var(--r-sm);color:var(--t3);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;transition:border-color .15s,color .15s;}
 .warmup-toggle.active{border-color:var(--accent);color:var(--accent2);background:var(--abg);}
+.reps-grid{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;}
+.reps-input{flex:1;min-width:44px;text-align:center;padding:11px 6px;}
+.warmup-set-row{display:flex;align-items:center;gap:6px;margin-top:8px;}
+.wu-idx{font-size:11px;color:var(--t3);width:14px;flex-shrink:0;text-align:right;}
+.wu-w,.wu-r{flex:1;}
+.wu-del{width:32px;height:40px;background:var(--rbg);border:0.5px solid rgba(240,101,101,0.2);border-radius:var(--r-sm);color:var(--red);font-size:18px;cursor:pointer;flex-shrink:0;font-family:var(--font);}
+.warmup-add-btn{margin-top:8px;width:100%;padding:7px;background:var(--bg3);border:0.5px dashed var(--line2);border-radius:var(--r-sm);color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--font);}
 
 /* PROGRESS CHART */
 .chart-select{width:100%;padding:9px 13px;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);color:var(--t1);font-family:var(--font);font-size:13px;margin-bottom:12px;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;cursor:pointer;}
@@ -320,11 +327,11 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
   <div class="sheet">
     <div class="sheet-title" id="sheet-move-name"></div>
     <div class="sheet-prev" id="sheet-prev-info"></div>
-    <div class="f-grid">
-      <div><label class="f-label">Set</label><input class="f-input" id="f-sets" type="number" placeholder="3" min="1" max="20"></div>
-      <div><label class="f-label">Tekrar</label><input class="f-input" id="f-reps" type="number" placeholder="10" min="1" max="100"></div>
+    <div class="f-grid" style="grid-template-columns:1fr 1fr">
+      <div><label class="f-label">Set</label><input class="f-input" id="f-sets" type="number" placeholder="3" min="1" max="20" oninput="G.updateRepInputs()"></div>
       <div><label class="f-label">Ağırlık kg</label><input class="f-input" id="f-weight" type="number" placeholder="—" min="0" step="0.5"></div>
     </div>
+    <div class="f-row" id="f-reps-section"></div>
     <div class="f-row">
       <label class="f-label">Zorluk</label>
       <div class="diff-opts">
@@ -335,12 +342,7 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
     </div>
     <div class="f-row" id="f-warmup-row">
       <button class="warmup-toggle" id="warmup-toggle-btn" onclick="G.toggleWarmup()">+ Isınma seti ekle</button>
-      <div class="warmup-inputs" id="warmup-inputs" style="display:none">
-        <div class="f-grid" style="grid-template-columns:1fr 1fr;margin-top:8px;margin-bottom:0">
-          <div><label class="f-label">Isınma kg</label><input class="f-input" id="f-warmup-weight" type="number" placeholder="—" min="0" step="0.5"></div>
-          <div><label class="f-label">Tekrar</label><input class="f-input" id="f-warmup-reps" type="number" placeholder="10" min="1" max="100"></div>
-        </div>
-      </div>
+      <div id="warmup-inputs"></div>
     </div>
     <div class="f-row" id="f-note-row">
       <label class="f-label">Not (opsiyonel)</label>
@@ -394,7 +396,7 @@ const USERS = {
 let currentUser = localStorage.getItem('gg_user')||null;
 let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
-let session=null, formMoveIdx=null, formDiff='medium', formWarmup=false;
+let session=null, formMoveIdx=null, formDiff='medium', formWarmupSets=[];
 let chartExercise={};
 let chartRange={me:'all',friend:'all'};
 let toastedNotifIds = new Set(JSON.parse(localStorage.getItem('gg_toasted')||'[]'));
@@ -442,6 +444,7 @@ function listenAll(){
     allCheckins={};
     snap.forEach(d=>{const data=d.data();allCheckins[data.dateKey+"_"+data.userId]=data;});
     rebuildPRsFromCheckins();
+    if(session&&currentUser){const uid=USERS[currentUser]?.id;if(uid&&getUserCI(session.dateKey,uid)){session=null;saveSession();}}
     renderCurrent();
   });
   onSnapshot(collection(db,"notifs"),snap=>{
@@ -523,6 +526,38 @@ function showToast(icon,title,sub){
   setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),300);},4500);
 }
 
+const SESSION_KEY='gg_session';
+function saveSession(){if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(SESSION_KEY);}
+function loadSession(){try{const s=localStorage.getItem(SESSION_KEY);if(s)session=JSON.parse(s);}catch(e){localStorage.removeItem(SESSION_KEY);}}
+
+function updateRepInputs(existingReps){
+  const n=Math.min(parseInt(document.getElementById('f-sets')?.value)||1,20);
+  const section=document.getElementById('f-reps-section');
+  if(!section)return;
+  const cur=existingReps!==undefined?existingReps:[...document.querySelectorAll('.reps-input')].map(el=>parseInt(el.value)||0);
+  section.innerHTML=`<label class="f-label">Tekrar</label><div class="reps-grid">${Array.from({length:n},(_,i)=>`<input class="f-input reps-input" type="number" data-idx="${i}" placeholder="—" min="1" max="999" value="${cur&&cur[i]?cur[i]:''}" oninput="G.repAutoFill(${i})">`).join('')}</div>`;
+}
+function repAutoFill(idx){
+  const inputs=[...document.querySelectorAll('.reps-input')];
+  const val=inputs[idx]?.value;
+  if(!val)return;
+  inputs.forEach((inp,i)=>{if(i!==idx&&!inp.value)inp.value=val;});
+}
+function renderWarmupInputs(){
+  const container=document.getElementById('warmup-inputs');
+  const btn=document.getElementById('warmup-toggle-btn');
+  if(!container)return;
+  if(formWarmupSets.length===0){
+    container.innerHTML='';
+    if(btn){btn.classList.remove('active');btn.textContent='+ Isınma seti ekle';}
+    return;
+  }
+  if(btn){btn.classList.add('active');btn.textContent='✓ Isınma setleri eklendi';}
+  container.innerHTML=formWarmupSets.map((ws,i)=>`<div class="warmup-set-row"><span class="wu-idx">${i+1}.</span><input class="f-input wu-w" type="number" placeholder="kg" min="0" step="0.5" value="${ws.weight||''}"><input class="f-input wu-r" type="number" placeholder="tekrar" min="1" max="999" value="${ws.reps||''}"><button class="wu-del" onclick="G.removeWarmupSet(${i})">×</button></div>`).join('')+`<button class="warmup-add-btn" onclick="G.addWarmupSet()">+ Set ekle</button>`;
+}
+function addWarmupSet(){formWarmupSets.push({weight:'',reps:''});renderWarmupInputs();}
+function removeWarmupSet(i){formWarmupSets.splice(i,1);renderWarmupInputs();}
+
 function getExerciseList(uid){
   const names=new Set();
   getCIForUser(uid).forEach(ci=>(ci.moves||[]).forEach(m=>{if(parseFloat(m.weight)>0)names.add(m.name);}));
@@ -588,11 +623,8 @@ function showChartTip(el,dateKey,weight,color){
 }
 function hideChartTip(){const tip=document.getElementById('chart-tip');if(tip)tip.style.display='none';}
 function toggleWarmup(){
-  formWarmup=!formWarmup;
-  const inputs=document.getElementById('warmup-inputs');
-  const btn=document.getElementById('warmup-toggle-btn');
-  if(inputs)inputs.style.display=formWarmup?'block':'none';
-  if(btn){btn.classList.toggle('active',formWarmup);btn.textContent=formWarmup?'✓ Isınma seti eklendi':'+ Isınma seti ekle';}
+  if(formWarmupSets.length>0){formWarmupSets=[];renderWarmupInputs();}
+  else{formWarmupSets=[{weight:'',reps:''}];renderWarmupInputs();}
 }
 
 function renderCurrent(){
@@ -770,7 +802,7 @@ function renderWorkout(){
       <div class="card"><div class="card-pad done-rows">
         ${existing.moves.map(m=>`<div class="move-row done" style="cursor:default">
           <div class="move-chk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg></div>
-          <div class="mr-right"><div class="mr-name">${m.name}</div><div class="mr-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}</div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${m.warmup.weight||'—'}kg×${m.warmup.reps||'—'}</div>`:''}${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}</div>
+          <div class="mr-right"><div class="mr-name">${m.name}</div><div class="mr-meta">${(()=>{const rp=m.repsPerSet;return rp&&rp.some((r,_,a)=>r!==a[0])?rp.join('/'):`${m.sets}×${m.reps||rp?.[0]||'?'}`})()}${m.weight?' · '+m.weight+'kg':''}</div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}</div>
           <div class="diff-tag ${m.diff}">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
         </div>`).join('')}
       </div></div>
@@ -819,7 +851,7 @@ function renderWorkout(){
           <div class="mr-right">
             <div class="mr-name">${name}${prVal>0?`<span class="pr-badge">🏆 ${prVal}kg</span>`:''}</div>
             ${m.done
-              ?`<div class="mr-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''} · <span class="diff-tag ${m.diff}" style="padding:1px 5px;font-size:9px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</span></div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${m.warmup.weight||'—'}kg×${m.warmup.reps||'—'}</div>`:''}`+`${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}`
+              ?`<div class="mr-meta">${(()=>{const rp=m.repsPerSet;return rp&&rp.some((r,_,a)=>r!==a[0])?rp.join('/'):`${m.sets}×${m.reps||rp?.[0]||'?'}`})()}${m.weight?' · '+m.weight+'kg':''} · <span class="diff-tag ${m.diff}" style="padding:1px 5px;font-size:9px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</span></div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}`+`${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}`
               :`<div class="mr-meta hint">Detay gir →</div>`}
           </div>
         </div>`;
@@ -989,7 +1021,7 @@ function showDay(dk){
 function startSession(pid,dateKey=todayKey()){
   const u=USERS[currentUser],p=PROGRAMS[u.pset][pid];
   session={programId:pid,dateKey,moves:p.moves.map(name=>({name,done:false,sets:null,reps:null,weight:null,diff:'medium'}))};
-  renderWorkout();
+  saveSession();renderWorkout();
 }
 
 function openHistoryEntry(){
@@ -1030,12 +1062,12 @@ function startHistorySession(){
   startSession(pid,dk);
 }
 
-function cancelSession(){session=null;renderWorkout();}
+function cancelSession(){session=null;saveSession();renderWorkout();}
 async function clearSession(){
   if(!confirm("Antrenmanı sıfırlamak istediğine emin misin?"))return;
   const u=USERS[currentUser];
   await deleteCheckin(todayKey(),u.id);
-  session=null;renderWorkout();
+  session=null;saveSession();renderWorkout();
 }
 async function finishSession(){
   const u=USERS[currentUser],today=todayKey();
@@ -1062,7 +1094,7 @@ async function finishSession(){
     }
   });
   const data={userId:u.id,userName:u.name,programId:session.programId,dateKey:saveDate,
-    moves:doneMoves.map(m=>({name:m.name,sets:m.sets,reps:m.reps,weight:m.weight,diff:m.diff,note:m.note||null,warmup:m.warmup||null})),
+    moves:doneMoves.map(m=>({name:m.name,sets:m.sets,reps:m.reps,repsPerSet:m.repsPerSet||null,weight:m.weight,diff:m.diff,note:m.note||null,warmup:m.warmup||null})),
     createdAt:new Date().toISOString()};
   await saveCheckin(saveDate,data);
   for(const n of prNotifs)await saveNotif(n);
@@ -1077,7 +1109,7 @@ async function finishSession(){
     seenBy:[u.id]
   };
   await saveNotif(finishNotif);
-  session=null;G.nav('home');
+  session=null;saveSession();G.nav('home');
 }
 function openSheet(idx){
   formMoveIdx=idx;
@@ -1102,20 +1134,15 @@ function openSheet(idx){
     }
   }
   document.getElementById('f-sets').value=m.sets||'';
-  document.getElementById('f-reps').value=m.reps||'';
   document.getElementById('f-weight').value=m.weight||'';
   formDiff=m.diff||'medium';
   G.selDiff(formDiff);
   const noteEl=document.getElementById('f-note');
   if(noteEl)noteEl.value=lastMove?.note||m.note||'';
-  formWarmup=!!(m.warmup);
-  const wuInputs=document.getElementById('warmup-inputs'),wuBtn=document.getElementById('warmup-toggle-btn');
-  if(wuInputs)wuInputs.style.display=formWarmup?'block':'none';
-  if(wuBtn){wuBtn.classList.toggle('active',formWarmup);wuBtn.textContent=formWarmup?'✓ Isınma seti eklendi':'+ Isınma seti ekle';}
-  if(formWarmup&&m.warmup){
-    const wwEl=document.getElementById('f-warmup-weight'),wrEl=document.getElementById('f-warmup-reps');
-    if(wwEl)wwEl.value=m.warmup.weight||'';if(wrEl)wrEl.value=m.warmup.reps||'';
-  }
+  updateRepInputs(m.repsPerSet||(m.reps?Array(m.sets||1).fill(m.reps):[]));
+  const raw=m.warmup;
+  formWarmupSets=Array.isArray(raw)?raw.map(w=>({...w})):raw?[{...raw}]:[];
+  renderWarmupInputs();
   document.getElementById('move-sheet').classList.add('open');
   const btn=document.getElementById('f-save-btn');if(btn)btn.style.background=u.color;
 }
@@ -1129,13 +1156,23 @@ function selDiff(d){
 }
 function saveMove(){
   const sets=parseInt(document.getElementById('f-sets').value);
-  const reps=parseInt(document.getElementById('f-reps').value);
-  if(!sets||!reps){alert("Set ve tekrar giriniz.");return;}
+  if(!sets){alert("Set giriniz.");return;}
+  const repInputs=[...document.querySelectorAll('.reps-input')];
+  const rawVals=repInputs.map(el=>parseInt(el.value)||0);
+  const filled=rawVals.filter(v=>v>0);
+  if(!filled.length){alert("En az bir tekrar giriniz.");return;}
+  const fillVal=filled.length===1?filled[0]:null;
+  const repsPerSet=rawVals.map(v=>v>0?v:(fillVal||filled[0]));
+  // sync empty boxes visually
+  repInputs.forEach((el,i)=>{if(!el.value&&repsPerSet[i])el.value=repsPerSet[i];});
+  const reps=repsPerSet[0];
   const weight=parseFloat(document.getElementById('f-weight').value)||null;
   const note=(document.getElementById('f-note')?.value||'').trim()||null;
-  let warmup=null;
-  if(formWarmup){const ww=parseFloat(document.getElementById('f-warmup-weight')?.value)||null,wr=parseInt(document.getElementById('f-warmup-reps')?.value)||null;if(ww||wr)warmup={weight:ww,reps:wr};}
-  session.moves[formMoveIdx]={...session.moves[formMoveIdx],sets,reps,weight,diff:formDiff,note,warmup,done:true};
+  const wuRows=[...document.querySelectorAll('.warmup-set-row')];
+  const warmupArr=wuRows.map(row=>({weight:parseFloat(row.querySelector('.wu-w')?.value)||null,reps:parseInt(row.querySelector('.wu-r')?.value)||null})).filter(w=>w.weight||w.reps);
+  const warmup=warmupArr.length?warmupArr:null;
+  session.moves[formMoveIdx]={...session.moves[formMoveIdx],sets,reps,repsPerSet,weight,diff:formDiff,note,warmup,done:true};
+  saveSession();
   closeSheet();renderWorkout();
 }
 
@@ -1155,9 +1192,11 @@ window.G={
   showDay,closeModal(){document.getElementById('modal-root').innerHTML='';},
   startSession,cancelSession,clearSession,finishSession,openHistoryEntry,startHistorySession,
   openSheet,closeSheet,selDiff,saveMove,submitPin,selectPinUser,
-  toggleWarmup,setChartExercise,setChartRange,showChartTip,hideChartTip,
+  toggleWarmup,addWarmupSet,removeWarmupSet,updateRepInputs,repAutoFill,
+  setChartExercise,setChartRange,showChartTip,hideChartTip,
 };
 
+loadSession();
 listenAll();
 renderCurrent();
 </script>

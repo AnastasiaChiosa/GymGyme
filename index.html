@@ -329,8 +329,8 @@ const PROGRAMS = {
 };
 
 const USERS = {
-  me:    {id:"user_me",    name:"Sen",     pset:"C",color:"#7c6af7",clight:"rgba(124,106,247,0.15)",initials:"S"},
-  friend:{id:"user_friend",name:"Arkadaş",pset:"A",color:"#3ecf8e",clight:"rgba(62,207,142,0.15)", initials:"A"}
+  me:    {id:"user_me",    name:"Enikgül", pset:"C",color:"#7c6af7",clight:"rgba(124,106,247,0.15)",initials:"EG"},
+  friend:{id:"user_friend",name:"Eniş",   pset:"A",color:"#3ecf8e",clight:"rgba(62,207,142,0.15)", initials:"EN"}
 };
 
 let currentUser = localStorage.getItem('gg_user')||null;
@@ -395,13 +395,27 @@ function getUserCI(dk,uid){return allCheckins[dk+"_"+uid]||null;}
 function calcStreak(uid){
   const dates=new Set(getCIForUser(uid).map(c=>c.dateKey));
   let s=0;const t=new Date();
-  for(let i=0;i<365;i++){const d=new Date(t);d.setDate(d.getDate()-i);if(dates.has(fmtDate(d)))s++;else if(i>0)break;}
+  for(let i=0;i<365;i++){const d=new Date(t);d.setDate(d.getDate()-i);const dow=d.getDay();if(dates.has(fmtDate(d)))s++;else if(i>0&&dow!==0&&dow!==6)break;}
   return s;
 }
 function calcWeek(uid){
   const now=new Date(),start=new Date(now);
   start.setDate(now.getDate()-now.getDay()+(now.getDay()===0?-6:1));start.setHours(0,0,0,0);
   return getCIForUser(uid).filter(c=>{const d=new Date(c.dateKey);return d>=start&&d<=now;}).length;
+}
+function calcWeeklyStreak(uid){
+  const cis=getCIForUser(uid);
+  function wStart(d){const s=new Date(d);const day=s.getDay();s.setDate(s.getDate()+(day===0?-6:1-day));s.setHours(0,0,0,0);return s;}
+  const cutoff=new Date();cutoff.setMonth(cutoff.getMonth()-1);
+  let streak=0;let ws=wStart(new Date());
+  for(let w=0;w<5;w++){
+    if(ws<cutoff)break;
+    const we=new Date(ws);we.setDate(ws.getDate()+6);we.setHours(23,59,59,999);
+    const cnt=cis.filter(c=>{const d=new Date(c.dateKey);return d>=ws&&d<=we;}).length;
+    if(cnt>=3)streak++;
+    ws=new Date(ws);ws.setDate(ws.getDate()-7);
+  }
+  return streak;
 }
 
 function showToast(icon,title,sub){
@@ -433,13 +447,14 @@ function renderHome(){
   const today=todayKey(),myCI=getUserCI(today,u.id),frCI=getUserCI(today,friend.id);
   const myStreak=calcStreak(u.id),frStreak=calcStreak(friend.id);
   const myWeek=calcWeek(u.id),frWeek=calcWeek(friend.id);
+  const myWSt=calcWeeklyStreak(u.id),frWSt=calcWeeklyStreak(friend.id);
   el.innerHTML=`<div class="page">
     <div class="hero" style="--hero-bg:linear-gradient(135deg,${u.color}99 0%,${u.color} 100%)">
       <div class="hero-glow"></div>
       <div class="hero-content">
         <div class="hero-label">${new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})}</div>
         <div class="hero-title">${myCI?'Harika iş! 🎉':'Bugün antrenman?'}</div>
-        <div class="hero-sub">${myCI?myCI.programId+' · '+myCI.moves.length+' hareket tamamlandı':'Haftalık hedef: 3 gün · '+myWeek+' tamamlandı'}</div>
+        <div class="hero-sub">${myCI?myCI.programId+' · '+myCI.moves.length+' hareket tamamlandı':'Haftalık hedef: 3 gün · '+myWeek+' tamamlandı'}${myWSt>0?' · '+myWSt+' hafta serisi 🔥':''}</div>
       </div>
       <button class="hero-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ Bitti':'+ Başla'}</button>
     </div>
@@ -460,9 +475,13 @@ function renderHome(){
     </div>
     <div class="sec-label">Bu hafta</div>
     <div class="stat-row">
-      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWeek}</div><div class="stat-l">senin günlerin</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWeek}</div><div class="stat-l">${friend.name}'ın günü</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:${myStreak>=frStreak?u.color:friend.color}">${Math.max(myStreak,frStreak)}</div><div class="stat-l">max streak</div></div>
+      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWeek}</div><div class="stat-l">${u.name}</div></div>
+      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWeek}</div><div class="stat-l">${friend.name}</div></div>
+    </div>
+    <div class="sec-label">Hafta serisi 🔥</div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWSt}</div><div class="stat-l">${u.name}</div></div>
+      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWSt}</div><div class="stat-l">${friend.name}</div></div>
     </div>
     <button class="switch-link" onclick="G.setUser(null)">Kullanıcı değiştir</button>
   </div>`;
@@ -604,7 +623,7 @@ function renderStats(){
   const el=document.getElementById('app');
   const rows=Object.values(USERS).map(u=>{
     const cis=getCIForUser(u.id);
-    const streak=calcStreak(u.id),week=calcWeek(u.id);
+    const streak=calcStreak(u.id),week=calcWeek(u.id),wst=calcWeeklyStreak(u.id);
     const allMoves=cis.flatMap(c=>c.moves||[]);
     const mc={};allMoves.forEach(m=>{mc[m.name]=(mc[m.name]||0)+1;});
     const top3=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,3);
@@ -612,7 +631,7 @@ function renderStats(){
     const pcs={};cis.forEach(c=>{pcs[c.programId]=(pcs[c.programId]||0)+1;});
     const topP=Object.entries(pcs).sort((a,b)=>b[1]-a[1])[0];
     const prs=Object.entries(prRecords).filter(([k])=>k.startsWith(u.id+'_')).map(([k,v])=>({name:k.replace(u.id+'_',''),w:v})).sort((a,b)=>b.w-a.w).slice(0,4);
-    return{u,cis,streak,week,allMoves,top3,totalSets,topP,prs};
+    return{u,cis,streak,week,wst,allMoves,top3,totalSets,topP,prs};
   });
   el.innerHTML=`<div class="page">
     <div class="sec-label">Genel</div>
@@ -630,7 +649,7 @@ function renderStats(){
     ${rows.map(r=>`
       <div class="sec-label" style="color:${r.u.color}">${r.u.name}</div>
       <div class="stat-big-row">
-        <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.streak}</div><div class="sbb-l">streak</div></div>
+        <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.wst}</div><div class="sbb-l">🔥 hafta serisi</div></div>
         <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.week}</div><div class="sbb-l">bu hafta</div></div>
         <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.totalSets}</div><div class="sbb-l">toplam set</div></div>
       </div>
@@ -749,6 +768,14 @@ async function finishSession(){
     moves:doneMoves.map(m=>({name:m.name,sets:m.sets,reps:m.reps,weight:m.weight,diff:m.diff})),
     createdAt:new Date().toISOString()};
   await saveCheckin(today,data);
+  const workoutNotif={
+    id:'workout_'+u.id+'_'+today+'_'+Date.now(),
+    icon:'💪',
+    text:`<strong>${u.name}</strong> antrenmanı tamamladı! ${session.programId} · ${doneMoves.length} hareket`,
+    time:Date.now(),
+    seenBy:[u.id]
+  };
+  await saveNotif(workoutNotif);
   for(const n of prNotifs)await saveNotif(n);
   session=null;G.nav('home');
 }

@@ -497,6 +497,20 @@ function calcWeek(uid){
   start.setDate(now.getDate()-now.getDay()+(now.getDay()===0?-6:1));start.setHours(0,0,0,0);
   return getCIForUser(uid).filter(c=>{const d=new Date(c.dateKey);return d>=start&&d<=now;}).length;
 }
+function calcWeeklyStreak(uid){
+  const cis=getCIForUser(uid);
+  function wMon(d){const s=new Date(d);const day=s.getDay();s.setDate(s.getDate()+(day===0?-6:1-day));s.setHours(0,0,0,0);return s;}
+  let streak=0,ws=wMon(new Date());
+  for(let w=0;w<104;w++){
+    const we=new Date(ws);we.setDate(ws.getDate()+6);we.setHours(23,59,59,999);
+    const cnt=cis.filter(c=>{const d=new Date(c.dateKey+'T12:00:00');return d>=ws&&d<=we;}).length;
+    if(cnt>=3)streak++;
+    else if(w>0)break; // geçmiş hafta < 3 → zincir kırıldı
+    // w===0 (mevcut hafta) < 3 ise atla, zinciri kırma
+    ws=new Date(ws);ws.setDate(ws.getDate()-7);
+  }
+  return streak;
+}
 function calcMaxStreak(uid){
   const dates=getCIForUser(uid).map(c=>c.dateKey).sort();
   if(!dates.length)return 0;
@@ -658,6 +672,7 @@ function renderHome(){
   const today=todayKey(),myCI=getUserCI(today,u.id),frCI=getUserCI(today,friend.id);
   const myStreak=calcStreak(u.id),frStreak=calcStreak(friend.id);
   const myWeek=calcWeek(u.id),frWeek=calcWeek(friend.id);
+  const myWSt=calcWeeklyStreak(u.id),frWSt=calcWeeklyStreak(friend.id);
   el.innerHTML=`<div class="page">
     <div class="hero" style="--hero-bg:linear-gradient(135deg,${u.color}99 0%,${u.color} 100%)">
       <div class="hero-glow"></div>
@@ -685,9 +700,13 @@ function renderHome(){
     </div>
     <div class="sec-label">Bu hafta</div>
     <div class="stat-row">
-      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWeek}</div><div class="stat-l">senin günlerin</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWeek}</div><div class="stat-l">${friend.name}'ın günü</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:${myStreak>=frStreak?u.color:friend.color}">${Math.max(myStreak,frStreak)}</div><div class="stat-l">max streak</div></div>
+      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWeek}</div><div class="stat-l">${u.name}</div></div>
+      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWeek}</div><div class="stat-l">${friend.name}</div></div>
+    </div>
+    <div class="sec-label">Hafta serisi 🔥</div>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWSt}</div><div class="stat-l">${u.name}</div></div>
+      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWSt}</div><div class="stat-l">${friend.name}</div></div>
     </div>
     <button class="switch-link" onclick="G.setUser(null)">Kullanıcı değiştir</button>
   </div>`;

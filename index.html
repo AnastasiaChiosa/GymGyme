@@ -274,6 +274,13 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .wu-w,.wu-r{flex:1;}
 .wu-del{width:32px;height:40px;background:var(--rbg);border:0.5px solid rgba(240,101,101,0.2);border-radius:var(--r-sm);color:var(--red);font-size:18px;cursor:pointer;flex-shrink:0;font-family:var(--font);}
 .warmup-add-btn{margin-top:8px;width:100%;padding:7px;background:var(--bg3);border:0.5px dashed var(--line2);border-radius:var(--r-sm);color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--font);}
+.extra-set-row{display:flex;align-items:center;gap:6px;margin-top:8px;}
+.es-idx{font-size:11px;color:var(--t3);width:14px;flex-shrink:0;text-align:right;}
+.es-s,.es-r,.es-w{flex:1;}
+.es-label{font-size:9px;color:var(--t3);text-align:center;margin-bottom:2px;}
+.es-del{width:32px;height:40px;background:var(--rbg);border:0.5px solid rgba(240,101,101,0.2);border-radius:var(--r-sm);color:var(--red);font-size:18px;cursor:pointer;flex-shrink:0;font-family:var(--font);}
+.extra-add-btn{margin-top:8px;width:100%;padding:9px 13px;background:var(--bg3);border:0.5px dashed var(--line2);border-radius:var(--r-sm);color:var(--t3);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);text-align:left;transition:border-color .15s,color .15s;}
+.mr-extra{font-size:11px;color:var(--t2);margin-top:3px;}
 .cardio-type-row{display:flex;gap:8px;margin-bottom:4px;}
 .cardio-type-btn{flex:1;padding:13px;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);color:var(--t2);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .12s;}
 .cardio-type-btn.active{background:var(--gbg);border-color:rgba(62,207,142,0.35);color:var(--green);}
@@ -364,6 +371,9 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
       <button class="warmup-toggle" id="warmup-toggle-btn" onclick="G.toggleWarmup()">+ Isınma seti ekle</button>
       <div id="warmup-inputs"></div>
     </div>
+    <div class="f-row" id="f-extra-row">
+      <div id="extra-set-inputs"></div>
+    </div>
     <div class="f-row" id="f-note-row">
       <label class="f-label">Not (opsiyonel)</label>
       <textarea class="f-input f-textarea" id="f-note" placeholder="Bu hareket hakkında not..." rows="2"></textarea>
@@ -416,7 +426,7 @@ const USERS = {
 let currentUser = localStorage.getItem('gg_user')||null;
 let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
-let session=null, formMoveIdx=null, formDiff='medium', formWarmupSets=[];
+let session=null, formMoveIdx=null, formDiff='medium', formWarmupSets=[], formExtraSets=[];
 let chartExercise={};
 let chartRange={me:'all',friend:'all'};
 let toastedNotifIds = new Set(JSON.parse(localStorage.getItem('gg_toasted')||'[]'));
@@ -606,6 +616,18 @@ function renderWarmupInputs(){
 }
 function addWarmupSet(){formWarmupSets.push({weight:'',reps:''});renderWarmupInputs();}
 function removeWarmupSet(i){formWarmupSets.splice(i,1);renderWarmupInputs();}
+
+function renderExtraSetInputs(){
+  const container=document.getElementById('extra-set-inputs');
+  if(!container)return;
+  const header=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><label class="f-label" style="margin:0">Ek setler</label></div>`;
+  const colLabels=`<div style="display:flex;gap:6px;padding:0 38px 0 20px"><span class="es-label" style="flex:1">Set</span><span class="es-label" style="flex:1">Tekrar</span><span class="es-label" style="flex:1">kg</span></div>`;
+  const rows=formExtraSets.map((es,i)=>`<div class="extra-set-row"><span class="es-idx">${i+1}.</span><input class="f-input es-s" type="number" placeholder="3" min="1" max="20" value="${es.sets||''}"><input class="f-input es-r" type="number" placeholder="—" min="1" max="999" value="${es.reps||''}"><input class="f-input es-w" type="number" placeholder="kg" min="0" step="0.5" value="${es.weight||''}"><button class="es-del" onclick="G.removeExtraSet(${i})">×</button></div>`).join('');
+  const addBtn=`<button class="extra-add-btn" onclick="G.addExtraSet()">+ Farklı ağırlıkta set ekle</button>`;
+  container.innerHTML=(formExtraSets.length?header+colLabels+rows:'')+addBtn;
+}
+function addExtraSet(){formExtraSets.push({sets:'',reps:'',weight:''});renderExtraSetInputs();}
+function removeExtraSet(i){formExtraSets.splice(i,1);renderExtraSetInputs();}
 
 function getExerciseList(uid){
   const names=new Set();
@@ -960,7 +982,7 @@ function renderWorkout(){
           <div class="mr-right">
             <div class="mr-name">${name}${prVal>0?`<span class="pr-badge">🏆 ${prVal}kg</span>`:''}</div>
             ${m.done
-              ?`<div class="mr-meta">${(()=>{const rp=m.repsPerSet;return rp&&rp.some((r,_,a)=>r!==a[0])?rp.join('/'):`${m.sets}×${m.reps||rp?.[0]||'?'}`})()}${m.weight?' · '+m.weight+'kg':''} · <span class="diff-tag ${m.diff}" style="padding:1px 5px;font-size:9px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</span></div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}`+`${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}`
+              ?`<div class="mr-meta">${(()=>{const rp=m.repsPerSet;return rp&&rp.some((r,_,a)=>r!==a[0])?rp.join('/'):`${m.sets}×${m.reps||rp?.[0]||'?'}`})()}${m.weight?' · '+m.weight+'kg':''} · <span class="diff-tag ${m.diff}" style="padding:1px 5px;font-size:9px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</span></div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}${m.extraSets?`<div class="mr-extra">+ ${m.extraSets.map(e=>`${e.sets||'?'}×${e.reps||'?'} @ ${e.weight||'—'}kg`).join(' · ')}</div>`:''}`+`${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}`
               :`<div class="mr-meta hint">Detay gir →</div>`}
           </div>
         </div>`;
@@ -1235,7 +1257,7 @@ async function finishSession(){
     }
   });
   const data={userId:u.id,userName:u.name,programId:session.programId,dateKey:saveDate,
-    moves:doneMoves.map(m=>({name:m.name,sets:m.sets,reps:m.reps,repsPerSet:m.repsPerSet||null,weight:m.weight,diff:m.diff,note:m.note||null,warmup:m.warmup||null})),
+    moves:doneMoves.map(m=>({name:m.name,sets:m.sets,reps:m.reps,repsPerSet:m.repsPerSet||null,weight:m.weight,diff:m.diff,note:m.note||null,warmup:m.warmup||null,extraSets:m.extraSets||null})),
     createdAt:new Date().toISOString()};
   await saveCheckin(saveDate,data);
   for(const n of prNotifs)await saveNotif(n);
@@ -1285,6 +1307,8 @@ function openSheet(idx){
   const raw=m.warmup;
   formWarmupSets=Array.isArray(raw)?raw.map(w=>({...w})):raw?[{...raw}]:[];
   renderWarmupInputs();
+  formExtraSets=Array.isArray(m.extraSets)?m.extraSets.map(e=>({...e})):[];
+  renderExtraSetInputs();
   document.getElementById('move-sheet').classList.add('open');
   const btn=document.getElementById('f-save-btn');if(btn)btn.style.background=u.color;
 }
@@ -1313,7 +1337,10 @@ function saveMove(){
   const wuRows=[...document.querySelectorAll('.warmup-set-row')];
   const warmupArr=wuRows.map(row=>({weight:parseFloat(row.querySelector('.wu-w')?.value)||null,reps:parseInt(row.querySelector('.wu-r')?.value)||null})).filter(w=>w.weight||w.reps);
   const warmup=warmupArr.length?warmupArr:null;
-  session.moves[formMoveIdx]={...session.moves[formMoveIdx],sets,reps,repsPerSet,weight,diff:formDiff,note,warmup,done:true};
+  const esRows=[...document.querySelectorAll('.extra-set-row')];
+  const extraArr=esRows.map(row=>({sets:parseInt(row.querySelector('.es-s')?.value)||null,reps:parseInt(row.querySelector('.es-r')?.value)||null,weight:parseFloat(row.querySelector('.es-w')?.value)||null})).filter(e=>e.sets||e.reps||e.weight);
+  const extraSets=extraArr.length?extraArr:null;
+  session.moves[formMoveIdx]={...session.moves[formMoveIdx],sets,reps,repsPerSet,weight,diff:formDiff,note,warmup,extraSets,done:true};
   saveSession();
   closeSheet();renderWorkout();
 }

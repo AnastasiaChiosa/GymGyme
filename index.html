@@ -101,6 +101,19 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .notif-text strong{color:var(--t0);font-weight:600;}
 .notif-time{font-size:11px;color:var(--t3);margin-top:2px;}
 .notif-empty{padding:24px;text-align:center;color:var(--t3);font-size:13px;}
+.notif-replies{margin-top:7px;display:flex;flex-wrap:wrap;gap:5px;}
+.nr-reaction{display:inline-flex;align-items:center;gap:4px;background:var(--bg3);border:0.5px solid var(--line2);border-radius:20px;padding:3px 9px;font-size:12px;color:var(--t2);}
+.nr-comment{background:var(--bg3);border-radius:10px;padding:7px 10px;font-size:12px;color:var(--t1);width:100%;line-height:1.4;}
+.nr-from{font-size:10px;color:var(--t3);margin-bottom:2px;font-weight:600;}
+.notif-action-row{display:flex;align-items:center;gap:5px;margin-top:8px;}
+.na-emoji{width:34px;height:30px;border:0.5px solid var(--line2);border-radius:8px;background:var(--bg3);font-size:15px;cursor:pointer;font-family:var(--font);transition:transform .1s,background .1s;}
+.na-emoji:active{transform:scale(0.88);background:var(--bg4);}
+.na-comment-btn{flex:1;height:30px;border:0.5px solid var(--line2);border-radius:8px;background:var(--bg3);color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--font);padding:0 10px;text-align:left;transition:color .15s;}
+.na-comment-btn.open{color:var(--accent2);border-color:var(--accent);}
+.notif-comment-form{display:flex;gap:6px;margin-top:7px;}
+.nc-input{flex:1;background:var(--bg3);border:0.5px solid var(--line2);border-radius:8px;padding:8px 10px;color:var(--t0);font-size:13px;font-family:var(--font);outline:none;}
+.nc-input:focus{border-color:var(--accent);}
+.nc-send{padding:0 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-family:var(--font);font-weight:600;}
 
 /* TOAST */
 .toast-wrap{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;width:100%;max-width:400px;padding:0 16px;}
@@ -427,6 +440,7 @@ let currentUser = localStorage.getItem('gg_user')||null;
 let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
 let session=null, formMoveIdx=null, formDiff='medium', formWarmupSets=[], formExtraSets=[];
+let activeCommentInput=null;
 let chartExercise={};
 let chartRange={me:'all',friend:'all'};
 let toastedNotifIds = new Set(JSON.parse(localStorage.getItem('gg_toasted')||'[]'));
@@ -485,7 +499,7 @@ function listenAll(){
     allNotifs=fresh;
     let unread=0;
     fresh.forEach(n=>{
-      const forMe=!n.targetUserId||n.targetUserId===myId;
+      const forMe=!n.replyTo&&(!n.targetUserId||n.targetUserId===myId);
       const seen=n.seenBy&&n.seenBy.includes(myId);
       if(forMe&&!seen){
         unread++;
@@ -1089,6 +1103,27 @@ function renderStats(){
 }
 
 /* ── NOTIFS ── */
+async function sendReactionInline(parentId,emoji){
+  if(!currentUser)return;
+  const u=USERS[currentUser];
+  const existing=allNotifs.find(n=>n.replyTo===parentId&&n.type==='reaction'&&n.fromUserId===u.id);
+  if(existing){if(existing.emoji===emoji)return;existing.emoji=emoji;await saveNotif(existing);}
+  else await saveNotif({id:'react_'+Date.now()+'_'+Math.random().toString(36).slice(2),type:'reaction',replyTo:parentId,emoji,icon:emoji,fromUserId:u.id,fromUserName:u.name,time:Date.now(),seenBy:[u.id]});
+}
+async function sendCommentInline(parentId){
+  if(!currentUser)return;
+  const input=document.getElementById('nc-input-'+parentId);
+  const text=(input?.value||'').trim();if(!text)return;
+  const u=USERS[currentUser];
+  input.value='';activeCommentInput=null;
+  await saveNotif({id:'comment_'+Date.now()+'_'+Math.random().toString(36).slice(2),type:'comment',replyTo:parentId,icon:'💬',commentText:text,text:`<strong>${u.name}</strong>: ${text}`,fromUserId:u.id,fromUserName:u.name,time:Date.now(),seenBy:[u.id]});
+}
+function toggleCommentInput(parentId){
+  activeCommentInput=activeCommentInput===parentId?null:parentId;
+  renderNotifs();
+  if(activeCommentInput){setTimeout(()=>document.getElementById('nc-input-'+parentId)?.focus(),50);}
+}
+
 function renderNotifs(){
   const el=document.getElementById('app');
   if(currentUser){
@@ -1103,20 +1138,34 @@ function renderNotifs(){
     const pip=document.getElementById('notif-pip');if(pip)pip.classList.remove('show');
   }
   const myId=currentUser?USERS[currentUser].id:null;
-  const visible=allNotifs.filter(n=>!n.targetUserId||n.targetUserId===myId);
+  const visible=allNotifs.filter(n=>!n.replyTo&&(!n.targetUserId||n.targetUserId===myId));
+  const getReplies=nid=>allNotifs.filter(n=>n.replyTo===nid).sort((a,b)=>a.time-b.time);
+  const myReaction=nid=>{if(!myId)return null;return allNotifs.find(n=>n.replyTo===nid&&n.type==='reaction'&&n.fromUserId===myId)?.emoji||null;};
   el.innerHTML=`<div class="page">
     <div class="sec-label">Bildirimler</div>
     <div class="card">
       ${visible.length===0
         ?`<div class="notif-empty">Henüz bildirim yok.<br>Ağırlık rekoru kırınca burada görünür 🏆</div>`
-        :`<div class="notif-list">${visible.map(n=>`
-          <div class="notif-item">
-            <div class="notif-icon" style="background:var(--ambg)">${n.icon}</div>
-            <div class="notif-body">
-              <div class="notif-text">${n.text}</div>
-              <div class="notif-time">${timeAgo(n.time)}</div>
+        :`<div class="notif-list">${visible.map(n=>{
+          const isWorkout=n.type==='workout'||n.icon==='💪';
+          const replies=isWorkout?getReplies(n.id):[];
+          const myReact=isWorkout?myReaction(n.id):null;
+          const repliesHTML=replies.length?`<div class="notif-replies">${replies.map(r=>
+            r.type==='reaction'
+              ?`<span class="nr-reaction">${r.emoji} <span>${r.fromUserName}</span></span>`
+              :`<div class="nr-comment"><div class="nr-from">${r.fromUserName}</div>${r.commentText||''}</div>`
+          ).join('')}</div>`:'';
+          const actionHTML=isWorkout&&currentUser?`<div class="notif-action-row">${['💪','🔥','👏','😤'].map(e=>`<button class="na-emoji${myReact===e?' na-active':''}" style="${myReact===e?'background:var(--abg);border-color:var(--accent);':''}" onclick="G.sendReactionInline('${n.id}','${e}')">${e}</button>`).join('')}<button class="na-comment-btn${activeCommentInput===n.id?' open':''}" onclick="G.toggleCommentInput('${n.id}')">✏️ Yorum</button></div>${activeCommentInput===n.id?`<div class="notif-comment-form"><input class="nc-input" id="nc-input-${n.id}" type="text" placeholder="Bir şeyler yaz..." onkeydown="if(event.key==='Enter')G.sendCommentInline('${n.id}')"><button class="nc-send" onclick="G.sendCommentInline('${n.id}')">Gönder</button></div>`:''}`:'';          return`<div class="notif-item" style="flex-direction:column;align-items:stretch">
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <div class="notif-icon" style="background:var(--ambg)">${n.icon}</div>
+              <div class="notif-body">
+                <div class="notif-text">${n.text}</div>
+                <div class="notif-time">${timeAgo(n.time)}</div>
+              </div>
             </div>
-          </div>`).join('')}</div>`}
+            ${repliesHTML}${actionHTML}
+          </div>`;
+        }).join('')}</div>`}
     </div>
   </div>`;
 }
@@ -1263,11 +1312,11 @@ async function finishSession(){
   for(const n of prNotifs)await saveNotif(n);
   const finishNotif={
     id:'finish_'+Date.now()+'_'+Math.random().toString(36).slice(2),
+    type:'workout',
     icon:'💪',
     title:`${u.name} antrenmanı bitirdi!`,
     text:`<strong>${u.name}</strong> ${session.programId} programını tamamladı · ${doneMoves.length} hareket`,
     sub:session.programId+' · '+doneMoves.length+' hareket',
-    targetUserId:friend.id,
     time:Date.now(),
     seenBy:[u.id]
   };
@@ -1363,6 +1412,7 @@ window.G={
   startCardio,setCardioType,finishCardio,
   openSheet,closeSheet,selDiff,saveMove,submitPin,selectPinUser,
   toggleWarmup,addWarmupSet,removeWarmupSet,addExtraSet,removeExtraSet,updateRepInputs,repAutoFill,
+  sendReactionInline,sendCommentInline,toggleCommentInput,
   setChartExercise,setChartRange,showChartTip,hideChartTip,
 };
 

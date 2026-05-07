@@ -258,7 +258,8 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .modal-un{font-size:14px;font-weight:700;color:var(--t0);}
 .modal-prog{font-size:12px;color:var(--t3);}
 .modal-moves{padding-left:40px;display:flex;flex-direction:column;gap:5px;margin-bottom:12px;}
-.modal-mv{display:flex;align-items:center;gap:8px;}
+.modal-mv{display:flex;flex-direction:column;gap:3px;}
+.modal-mv-row{display:flex;align-items:center;gap:8px;}
 .modal-mv-name{flex:1;font-size:13px;color:var(--t1);}
 .modal-mv-meta{font-size:12px;color:var(--t3);}
 .modal-close{width:100%;margin-top:6px;padding:12px;background:var(--bg3);border:none;border-radius:var(--r-sm);font-size:14px;color:var(--t2);cursor:pointer;font-family:var(--font);}
@@ -1233,15 +1234,19 @@ function showDay(dk){
     const u=Object.values(USERS).find(u=>u.id===ci.userId);
     html+=`<div class="modal-uhd"><div class="modal-av" style="background:${u.clight};color:${u.color}">${u.initials}</div>
       <div><div class="modal-un">${u.name}</div><div class="modal-prog">${ci.programId}</div></div></div>
-      <div class="modal-moves">${(ci.moves||[]).map(m=>`<div class="modal-mv" style="flex-direction:column;align-items:stretch;gap:2px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div class="modal-mv-name" style="flex:1">${m.name}</div>
-          <div class="modal-mv-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}</div>
-          <div class="diff-tag ${m.diff}" style="font-size:10px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
-        </div>
-        ${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}
-        ${m.extraSets?`<div class="mr-extra">+ ${m.extraSets.map(e=>`${e.sets||'?'}×${e.reps||'?'} @ ${e.weight||'—'}kg`).join(' · ')}</div>`:''}
-      </div>`).join('')}</div>`;
+      <div class="modal-moves">${(ci.moves||[]).map(m=>{
+        const warmupStr=m.warmup?(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>(w.weight||'—')+'kg×'+(w.reps||'—')).join(', '):'';
+        const extraStr=m.extraSets?m.extraSets.map(e=>(e.sets||'?')+'×'+(e.reps||'?')+' @ '+(e.weight||'—')+'kg').join(' · '):'';
+        return `<div class="modal-mv">
+          <div class="modal-mv-row">
+            <div class="modal-mv-name">${m.name}</div>
+            <div class="modal-mv-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}</div>
+            <div class="diff-tag ${m.diff}" style="font-size:10px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
+          </div>
+          ${warmupStr?'<div class="mr-warmup">🔥 Isınma: '+warmupStr+'</div>':''}
+          ${extraStr?'<div class="mr-extra">+ '+extraStr+'</div>':''}
+        </div>`;
+      }).join('')}</div>`;
   });
   html+=`<button class="modal-close" onclick="G.closeModal()">Kapat</button></div></div>`;
   document.getElementById('modal-root').innerHTML=html;

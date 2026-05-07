@@ -538,9 +538,16 @@ function calcStreak(uid){
   return s;
 }
 function calcWeek(uid){
-  const now=new Date(),start=new Date(now);
-  start.setDate(now.getDate()-now.getDay()+(now.getDay()===0?-6:1));start.setHours(0,0,0,0);
-  return getCIForUser(uid).filter(c=>{const d=new Date(c.dateKey);return d>=start&&d<=now;}).length;
+  const now=new Date();
+  const start=new Date(now);
+  const day=start.getDay();
+  const diff=start.getDate()-day+(day===0?-6:1);
+  start.setDate(diff);
+  start.setHours(0,0,0,0);
+  const end=new Date(start);
+  end.setDate(end.getDate()+6);
+  end.setHours(23,59,59,999);
+  return getCIForUser(uid).filter(c=>{const d=new Date(c.dateKey+'T12:00:00');return d>=start&&d<=end;}).length;
 }
 function calcWeeklyStreak(uid){
   const cis=getCIForUser(uid);

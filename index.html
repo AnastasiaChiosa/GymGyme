@@ -1382,8 +1382,9 @@ async function finishSession(){
     seenBy:[u.id]
   };
   await saveNotif(finishNotif);
-  if(saveDate===today && weekBefore+1===3) showWeekBadge(u.color, calcWeeklyStreak(u.id));
+  const triggerBadge=saveDate===today && weekBefore+1===3;
   session=null;saveSession();G.nav('home');
+  if(triggerBadge) setTimeout(()=>showWeekBadge(u.color, calcWeeklyStreak(u.id)),120);
 }
 function openSheet(idx){
   formMoveIdx=idx;

@@ -950,7 +950,7 @@ function renderWorkout(){
       <div class="card"><div class="card-pad done-rows">
         ${existing.moves.map(m=>`<div class="move-row done" style="cursor:default">
           <div class="move-chk"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg></div>
-          <div class="mr-right"><div class="mr-name">${m.name}</div><div class="mr-meta">${(()=>{const rp=m.repsPerSet;return rp&&rp.some((r,_,a)=>r!==a[0])?rp.join('/'):`${m.sets}×${m.reps||rp?.[0]||'?'}`})()}${m.weight?' · '+m.weight+'kg':''}</div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}</div>
+          <div class="mr-right"><div class="mr-name">${m.name}</div><div class="mr-meta">${(()=>{const rp=m.repsPerSet;return rp&&rp.some((r,_,a)=>r!==a[0])?rp.join('/'):`${m.sets}×${m.reps||rp?.[0]||'?'}`})()}${m.weight?' · '+m.weight+'kg':''}</div>${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}${m.extraSets?`<div class="mr-extra">+ ${m.extraSets.map(e=>`${e.sets||'?'}×${e.reps||'?'} @ ${e.weight||'—'}kg`).join(' · ')}</div>`:''}${m.note?`<div class="mr-note">📝 ${m.note}</div>`:''}</div>
           <div class="diff-tag ${m.diff}">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
         </div>`).join('')}
       </div></div>
@@ -1233,10 +1233,14 @@ function showDay(dk){
     const u=Object.values(USERS).find(u=>u.id===ci.userId);
     html+=`<div class="modal-uhd"><div class="modal-av" style="background:${u.clight};color:${u.color}">${u.initials}</div>
       <div><div class="modal-un">${u.name}</div><div class="modal-prog">${ci.programId}</div></div></div>
-      <div class="modal-moves">${(ci.moves||[]).map(m=>`<div class="modal-mv">
-        <div class="modal-mv-name">${m.name}</div>
-        <div class="modal-mv-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}${m.extraSets?` + ${m.extraSets.map(e=>`${e.sets||'?'}×${e.reps||'?'}@${e.weight||'—'}kg`).join(', ')}`:''}</div>
-        <div class="diff-tag ${m.diff}" style="font-size:10px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
+      <div class="modal-moves">${(ci.moves||[]).map(m=>`<div class="modal-mv" style="flex-direction:column;align-items:stretch;gap:2px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="modal-mv-name" style="flex:1">${m.name}</div>
+          <div class="modal-mv-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}</div>
+          <div class="diff-tag ${m.diff}" style="font-size:10px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
+        </div>
+        ${m.warmup?`<div class="mr-warmup">🔥 Isınma: ${(Array.isArray(m.warmup)?m.warmup:[m.warmup]).map(w=>`${w.weight||'—'}kg×${w.reps||'—'}`).join(', ')}</div>`:''}
+        ${m.extraSets?`<div class="mr-extra">+ ${m.extraSets.map(e=>`${e.sets||'?'}×${e.reps||'?'} @ ${e.weight||'—'}kg`).join(' · ')}</div>`:''}
       </div>`).join('')}</div>`;
   });
   html+=`<button class="modal-close" onclick="G.closeModal()">Kapat</button></div></div>`;

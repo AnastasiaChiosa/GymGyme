@@ -577,6 +577,7 @@ function calcWeekVolume(uid){
     (ci.moves||[]).forEach(m=>{
       const s=parseInt(m.sets)||0,r=parseInt(m.reps)||0,w=parseFloat(m.weight)||0;
       sets+=s;volume+=s*r*w;
+      (m.extraSets||[]).forEach(e=>{const es=parseInt(e.sets)||0,er=parseInt(e.reps)||0,ew=parseFloat(e.weight)||0;sets+=es;volume+=es*er*ew;});
     });
   });
   return{volume:Math.round(volume),sets};
@@ -942,7 +943,7 @@ function renderWorkout(){
         <div class="hero-content">
           <div class="hero-label" style="color:var(--green)">Tamamlandı 🎉</div>
           <div class="hero-title">${existing.programId}</div>
-          <div class="hero-sub">${existing.moves.length} hareket · ${existing.moves.reduce((s,m)=>s+(m.sets||0),0)} toplam set</div>
+          <div class="hero-sub">${existing.moves.length} hareket · ${existing.moves.reduce((s,m)=>s+(m.sets||0)+(m.extraSets||[]).reduce((a,e)=>a+(e.sets||0),0),0)} toplam set</div>
         </div>
       </div>
       <div class="sec-label">Hareketler</div>
@@ -1099,7 +1100,7 @@ function renderStats(){
     const allMoves=cis.flatMap(c=>c.moves||[]);
     const mc={};allMoves.forEach(m=>{mc[m.name]=(mc[m.name]||0)+1;});
     const top3=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    const totalSets=allMoves.reduce((s,m)=>s+(parseInt(m.sets)||0),0);
+    const totalSets=allMoves.reduce((s,m)=>s+(parseInt(m.sets)||0)+(m.extraSets||[]).reduce((a,e)=>a+(parseInt(e.sets)||0),0),0);
     const pcs={};cis.forEach(c=>{pcs[c.programId]=(pcs[c.programId]||0)+1;});
     const topP=Object.entries(pcs).sort((a,b)=>b[1]-a[1])[0];
     const prs=Object.entries(prRecords)
@@ -1234,7 +1235,7 @@ function showDay(dk){
       <div><div class="modal-un">${u.name}</div><div class="modal-prog">${ci.programId}</div></div></div>
       <div class="modal-moves">${(ci.moves||[]).map(m=>`<div class="modal-mv">
         <div class="modal-mv-name">${m.name}</div>
-        <div class="modal-mv-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}</div>
+        <div class="modal-mv-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}${m.extraSets?` + ${m.extraSets.map(e=>`${e.sets||'?'}×${e.reps||'?'}@${e.weight||'—'}kg`).join(', ')}`:''}</div>
         <div class="diff-tag ${m.diff}" style="font-size:10px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
       </div>`).join('')}</div>`;
   });
@@ -1458,6 +1459,8 @@ window.G={
   toggleWarmup,addWarmupSet,removeWarmupSet,addExtraSet,removeExtraSet,updateRepInputs,repAutoFill,
   sendReactionInline,sendCommentInline,toggleCommentInput,
   setChartExercise,setChartRange,showChartTip,hideChartTip,
+  showWeekBadge,
+  debugWeekCount(){ const u=USERS[currentUser]; console.log('weekBefore:',calcWeek(u.id),'calcWeeklyStreak:',calcWeeklyStreak(u.id)); }
 };
 
 loadSession();

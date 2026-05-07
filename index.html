@@ -90,6 +90,48 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .sbb-n{font-size:28px;font-weight:800;letter-spacing:-1.5px;}
 .sbb-l{font-size:10px;color:var(--t3);margin-top:3px;font-weight:500;}
 
+/* HOME — WEATHER CARD */
+.hw-card{border-radius:var(--r-xl);padding:18px 20px;position:relative;overflow:hidden;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.hw-left{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.hw-icon{font-size:42px;line-height:1;}
+.hw-temp{font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;}
+.hw-info{flex:1;text-align:right;}
+.hw-date{font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:2px;}
+.hw-desc{font-size:12px;color:rgba(255,255,255,0.8);margin-bottom:5px;}
+.hw-greeting{font-size:13px;font-weight:700;color:#fff;}
+.hw-corner{position:absolute;width:9px;height:9px;background:rgba(255,255,255,0.35);}
+.hw-corner.tl{top:8px;left:8px;} .hw-corner.tr{top:8px;right:8px;}
+.hw-corner.bl{bottom:8px;left:8px;} .hw-corner.br{bottom:8px;right:8px;}
+/* HOME — ASYMMETRIC GRID */
+.asym-grid{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:auto auto;gap:10px;}
+.asym-streak{grid-row:span 2;background:var(--bg2);border-radius:var(--r-lg);border:0.5px solid var(--line2);padding:16px;display:flex;flex-direction:column;gap:5px;}
+.as-label{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;}
+.as-num{font-size:44px;font-weight:800;line-height:1;letter-spacing:-2px;}
+.as-sub{font-size:11px;color:var(--t2);}
+.as-divider{height:0.5px;background:var(--line2);margin:4px 0;}
+.as-mini{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:5px;}
+.as-mini span{font-weight:700;}
+.asym-uc{background:var(--bg2);border-radius:var(--r-md);border:0.5px solid var(--line2);padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;transition:border-color .15s;}
+.asym-uc.done{border-color:var(--uc-color,var(--accent));}
+.uc-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
+.uc-name{font-size:11px;font-weight:600;color:var(--t1);}
+.uc-check{font-size:17px;font-weight:700;}
+/* HOME — BU HAFTA HEADER */
+.bh-header{display:flex;align-items:center;gap:8px;padding:2px 0;}
+.bh-accent{width:3px;height:16px;background:var(--accent);border-radius:2px;flex-shrink:0;}
+.bh-title{font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--t3);text-transform:uppercase;}
+.bh-dots{display:flex;gap:4px;margin-left:auto;}
+.bh-dot{width:5px;height:5px;background:var(--accent);opacity:0.4;}
+/* HOME — WEEK GRID */
+.wk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.wk-box{background:var(--bg2);border-radius:var(--r-md);border:0.5px solid var(--line2);padding:14px;text-align:center;}
+.wk-n{font-size:30px;font-weight:800;line-height:1;letter-spacing:-1px;}
+.wk-l{font-size:11px;color:var(--t3);margin-top:4px;font-weight:500;}
+/* HOME — START BUTTON */
+.hw-start-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:var(--abg);border:0.5px solid var(--accent);border-radius:var(--r-md);color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .15s;}
+.hw-start-btn:hover{background:var(--abg2);}
+.hw-start-btn.done{background:transparent;opacity:0.7;}
+
 /* NOTIF */
 .notif-list{display:flex;flex-direction:column;gap:1px;}
 .notif-item{display:flex;align-items:flex-start;gap:10px;padding:11px 14px;border-bottom:0.5px solid var(--line);animation:slideIn .3s ease;}
@@ -461,6 +503,16 @@ html[data-theme="arcade"] .logo-mark{border-radius:0;box-shadow:0 0 0 2px #ccff0
 html[data-theme="arcade"] .wb-box{border-radius:0;background:rgba(14,18,32,0.9);box-shadow:inset -4px -4px 0 #000,inset 4px 4px 0 rgba(204,255,0,0.1),0 0 0 3px #ccff00,0 0 48px rgba(204,255,0,0.3);}
 /* Scanlines */
 html[data-theme="arcade"] body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,10,0.13) 2px,rgba(0,0,10,0.13) 4px);}
+/* Home asymgrid — arcade overrides */
+html[data-theme="arcade"] .asym-streak,html[data-theme="arcade"] .asym-uc,html[data-theme="arcade"] .wk-box{border-radius:0;box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(255,255,255,0.05);}
+html[data-theme="arcade"] .as-num,html[data-theme="arcade"] .wk-n{font-family:'Press Start 2P',monospace;font-size:1.5rem;letter-spacing:0;}
+html[data-theme="arcade"] .hw-temp{font-family:'Press Start 2P',monospace;font-size:1.1rem;letter-spacing:0;}
+html[data-theme="arcade"] .hw-greeting{font-family:'Press Start 2P',monospace;font-size:0.5rem;line-height:1.7;}
+html[data-theme="arcade"] .bh-title{font-family:'Press Start 2P',monospace;font-size:0.48rem;}
+html[data-theme="arcade"] .hw-start-btn{font-family:'Press Start 2P',monospace;font-size:0.55rem;line-height:1.6;border-radius:0;box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(255,255,255,0.08);border:none;}
+html[data-theme="arcade"] .hw-start-btn:active{box-shadow:inset -2px -2px 0 #000,inset 2px 2px 0 rgba(255,255,255,0.08);transform:translateY(1px);}
+html[data-theme="arcade"] .hw-start-btn.done{box-shadow:none;border:2px solid rgba(204,255,0,0.3);}
+html[data-theme="arcade"] .hw-corner{background:rgba(255,255,255,0.5);}
 </style>
 </head>
 <body>
@@ -583,6 +635,7 @@ const USERS = {
 let currentUser = localStorage.getItem('gg_user')||null;
 let currentTheme = localStorage.getItem('gg_theme')||'default';
 let statsTab = null;
+let weatherData = null;
 let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
 let session=null, formMoveIdx=null, formDiff='medium', formWarmupSets=[], formExtraSets=[];
@@ -738,6 +791,36 @@ function setTheme(t){
 function cycleTheme(){setTheme(currentTheme==='arcade'?'default':'arcade');}
 function ath(def,arcade){return currentTheme==='arcade'?arcade:def;}
 function switchStatsTab(key){statsTab=key;renderStats();}
+
+function getWeatherIcon(code){
+  const n=parseInt(code);
+  if(n===113)return'☀️';
+  if(n===116)return'⛅';
+  if(n===119||n===122)return'☁️';
+  if(n===143||n===248||n===260)return'🌫️';
+  if([176,263,266,293,296].includes(n))return'🌦️';
+  if([179,182,185,281,284,311,314,317,350,362,365,374].includes(n))return'🌨️';
+  if([200,386,389].includes(n))return'⛈️';
+  if([299,302,305,308,356,359].includes(n))return'🌧️';
+  if([227,230,323,326,329,332,335,338,368,371,377,392,395].includes(n))return'❄️';
+  return'🌤️';
+}
+function fetchWeather(){
+  const CACHE_MS=30*60*1000;
+  const cached=localStorage.getItem('gg_weather');
+  if(cached){
+    try{const{data,ts}=JSON.parse(cached);weatherData=data;if(Date.now()-ts<CACHE_MS)return;}catch(e){}
+  }
+  fetch('https://wttr.in/Istanbul?format=j1')
+    .then(r=>r.json())
+    .then(d=>{
+      const c=d.current_condition[0];
+      weatherData={temp:c.temp_C,desc:c.weatherDesc[0].value,icon:getWeatherIcon(c.weatherCode)};
+      localStorage.setItem('gg_weather',JSON.stringify({data:weatherData,ts:Date.now()}));
+      if(page==='home')renderHome();
+    })
+    .catch(()=>{if(!weatherData)weatherData={temp:'--',desc:'',icon:'⛅'};});
+}
 
 function showWeekBadge(color, weeklyStreak){
   const PARTICLE_COUNT=40, AUTO_DISMISS_MS=3800, FADE_MS=350;
@@ -935,46 +1018,65 @@ function renderHome(){
     else renderPinGate();
     return;
   }
-  const u=USERS[currentUser],friend=currentUser==='me'?USERS.friend:USERS.me;
-  const today=todayKey(),myCI=getUserCI(today,u.id),frCI=getUserCI(today,friend.id);
-  const myStreak=calcStreak(u.id),frStreak=calcStreak(friend.id);
-  const myWeek=calcWeek(u.id),frWeek=calcWeek(friend.id);
-  const myWSt=calcWeeklyStreak(u.id),frWSt=calcWeeklyStreak(friend.id);
+  const u=USERS[currentUser], friend=currentUser==='me'?USERS.friend:USERS.me;
+  const today=todayKey(), myCI=getUserCI(today,u.id), frCI=getUserCI(today,friend.id);
+  const myStreak=calcStreak(u.id), frStreak=calcStreak(friend.id);
+  const myWeek=calcWeek(u.id), frWeek=calcWeek(friend.id);
+  const dateStr=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
+  const wIcon=weatherData?weatherData.icon:'⛅';
+  const wTemp=weatherData?weatherData.temp:'--';
+  const wDesc=weatherData?weatherData.desc:'';
+  const greeting=myCI?ath('Harika iş! 🎉','QUEST DONE!'):ath('Bugün antrenman?','START GAME?');
   el.innerHTML=`<div class="page">
-    <div class="hero" style="--hero-bg:linear-gradient(135deg,${u.color}99 0%,${u.color} 100%)">
-      <div class="hero-glow"></div>
-      <div class="hero-content">
-        <div class="hero-label">${new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})}</div>
-        <div class="hero-title">${myCI?ath('Harika iş! 🎉','QUEST DONE!'):ath('Bugün antrenman?','START GAME?')}</div>
-        <div class="hero-sub">${myCI?myCI.programId+' · '+myCI.moves.length+' '+ath('hareket tamamlandı','moves done'):ath('Haftalık hedef: 3 gün · ','Weekly goal: ')+(myWeek+ath(' tamamlandı',' done'))}</div>
+    <div class="hw-card" style="background:linear-gradient(135deg,${u.color}bb,${u.color})">
+      <span class="hw-corner tl"></span><span class="hw-corner tr"></span>
+      <span class="hw-corner bl"></span><span class="hw-corner br"></span>
+      <div class="hw-left">
+        <div class="hw-icon">${wIcon}</div>
+        <div class="hw-temp">${wTemp}°</div>
       </div>
-      <button class="hero-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ Bitti':'+ Başla'}</button>
-    </div>
-    <div class="sec-label">Bugün</div>
-    <div class="today-grid">
-      <div class="today-card ${myCI?'active':''}" style="--card-color:${u.color}">
-        <div class="t-avatar" style="background:${u.clight};color:${u.color}">${u.initials}</div>
-        <div class="t-name">${u.name}</div>
-        <div class="t-pill ${myCI?'done':'pending'}">${myCI?myCI.programId+' ✓':'Bekleniyor'}</div>
-        ${myCI?`<div class="t-moves">${myCI.moves.length} hareket</div>`:''}
-      </div>
-      <div class="today-card ${frCI?'active':''}" style="--card-color:${friend.color}">
-        <div class="t-avatar" style="background:${friend.clight};color:${friend.color}">${friend.initials}</div>
-        <div class="t-name">${friend.name}</div>
-        <div class="t-pill ${frCI?'done':'pending'}">${frCI?frCI.programId+' ✓':'Bekleniyor'}</div>
-        ${frCI?`<div class="t-moves">${frCI.moves.length} hareket</div>`:''}
+      <div class="hw-info">
+        <div class="hw-date">${dateStr}</div>
+        <div class="hw-desc">${wDesc}</div>
+        <div class="hw-greeting">${greeting}</div>
       </div>
     </div>
-    <div class="sec-label">Bu hafta</div>
-    <div class="stat-row">
-      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWeek}</div><div class="stat-l">${u.name}</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWeek}</div><div class="stat-l">${friend.name}</div></div>
+    <div class="asym-grid">
+      <div class="asym-streak">
+        <div class="as-label">🔥 Streak</div>
+        <div class="as-num" style="color:${u.color}">${myStreak}</div>
+        <div class="as-sub">haftalık seri</div>
+        <div class="as-divider"></div>
+        <div class="as-mini"><span style="color:${u.color}">${myStreak}</span> ${u.initials}</div>
+        <div class="as-mini"><span style="color:${friend.color}">${frStreak}</span> ${friend.initials}</div>
+      </div>
+      <div class="asym-uc ${myCI?'done':''}" style="--uc-color:${u.color}">
+        <div class="uc-av" style="background:${u.color}">${u.initials}</div>
+        <div class="uc-name">${u.name}</div>
+        <div class="uc-check" style="color:${myCI?u.color:'var(--t3)'}">${myCI?'✓':'—'}</div>
+      </div>
+      <div class="asym-uc ${frCI?'done':''}" style="--uc-color:${friend.color}">
+        <div class="uc-av" style="background:${friend.color}">${friend.initials}</div>
+        <div class="uc-name">${friend.name}</div>
+        <div class="uc-check" style="color:${frCI?friend.color:'var(--t3)'}">${frCI?'✓':'—'}</div>
+      </div>
     </div>
-    <div class="sec-label">Streak 🔥</div>
-    <div class="stat-row">
-      <div class="stat-box"><div class="stat-n" style="color:${u.color}">${myWSt}</div><div class="stat-l">${u.name}</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:${friend.color}">${frWSt}</div><div class="stat-l">${friend.name}</div></div>
+    <div class="bh-header">
+      <div class="bh-accent"></div>
+      <div class="bh-title">Bu Hafta</div>
+      <div class="bh-dots"><div class="bh-dot"></div><div class="bh-dot"></div></div>
     </div>
+    <div class="wk-grid">
+      <div class="wk-box">
+        <div class="wk-n" style="color:${u.color}">${myWeek}</div>
+        <div class="wk-l">${u.name}</div>
+      </div>
+      <div class="wk-box">
+        <div class="wk-n" style="color:${friend.color}">${frWeek}</div>
+        <div class="wk-l">${friend.name}</div>
+      </div>
+    </div>
+    <button class="hw-start-btn ${myCI?'done':''}" style="${myCI?'border-color:'+u.color+';color:'+u.color:''}" onclick="G.nav('workout')">${myCI?'✓ '+u.name+' – Bitti':'+ Antrenman Başlat'}</button>
     <button class="switch-link" onclick="G.setUser(null)">Kullanıcı değiştir</button>
   </div>`;
 }
@@ -1638,6 +1740,7 @@ window.G={
 };
 
 setTheme(currentTheme);
+fetchWeather();
 loadSession();
 listenAll();
 renderCurrent();

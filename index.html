@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="GymGyme">
 <title>GymGyme</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Press+Start+2P&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg0:#0a0a0a;--bg1:#111113;--bg2:#1a1a1e;--bg3:#232328;--bg4:#2c2c33;
@@ -326,6 +326,43 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .chart-tip{position:fixed;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);padding:7px 11px;text-align:center;pointer-events:none;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.5);display:none;min-width:64px;}
 .ct-weight{font-size:15px;font-weight:700;line-height:1.2;}
 .ct-date{font-size:11px;color:var(--t3);margin-top:2px;}
+
+/* THEME TOGGLE */
+.theme-toggle{background:none;border:0.5px solid var(--line2);border-radius:var(--r-sm);padding:5px 9px;font-size:16px;cursor:pointer;opacity:0.75;transition:opacity .15s;line-height:1;flex-shrink:0;}
+.theme-toggle:hover{opacity:1;}
+
+/* ARCADE THEME */
+html[data-theme="arcade"]{
+  --bg0:#04041a;--bg1:#07071e;--bg2:#0d0d2e;--bg3:#13133e;--bg4:#191950;
+  --line:rgba(245,230,66,0.08);--line2:rgba(245,230,66,0.16);
+  --t0:#f5e642;--t1:#d8d8ff;--t2:#8080b8;--t3:#505080;
+  --accent:#f5e642;--accent2:#fff799;--abg:rgba(245,230,66,0.1);--abg2:rgba(245,230,66,0.2);
+  --green:#00ff88;--gbg:rgba(0,255,136,0.08);
+  --amber:#ff6ef7;--ambg:rgba(255,110,247,0.08);
+  --red:#ff4545;--rbg:rgba(255,69,69,0.08);
+  --r-sm:0px;--r-md:0px;--r-lg:0px;--r-xl:0px;
+}
+html[data-theme="arcade"] .logo-text,
+html[data-theme="arcade"] .hero-title,
+html[data-theme="arcade"] .sh-title,
+html[data-theme="arcade"] .wb-title,
+html[data-theme="arcade"] .login-title{font-family:'Press Start 2P',monospace;letter-spacing:0;line-height:1.5;}
+html[data-theme="arcade"] .logo-text{font-size:11px;}
+html[data-theme="arcade"] .hero-title{font-size:13px;}
+html[data-theme="arcade"] .sh-title{font-size:13px;}
+html[data-theme="arcade"] .wb-title{font-size:11px;}
+html[data-theme="arcade"] .card,
+html[data-theme="arcade"] .today-card,
+html[data-theme="arcade"] .stat-box,
+html[data-theme="arcade"] .sbb,
+html[data-theme="arcade"] .move-row,
+html[data-theme="arcade"] .program-card,
+html[data-theme="arcade"] .sheet,
+html[data-theme="arcade"] .modal{box-shadow:0 0 0 1px var(--accent);}
+html[data-theme="arcade"] .logo-mark{border-radius:0;box-shadow:0 0 0 1px var(--accent),0 0 14px var(--accent);}
+html[data-theme="arcade"] .nav-btn.active{text-shadow:0 0 10px currentColor;}
+html[data-theme="arcade"] .wb-box{border-radius:0;box-shadow:0 0 0 2px #f5e642,0 0 48px rgba(245,230,66,0.25);}
+html[data-theme="arcade"] body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,20,0.14) 2px,rgba(0,0,20,0.14) 4px);}
 </style>
 </head>
 <body>
@@ -339,6 +376,7 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
       </div>
       <span class="logo-text">GymGyme</span>
     </div>
+    <button class="theme-toggle" id="theme-toggle" onclick="G.cycleTheme()" title="Tema değiştir">🎮</button>
     <div class="topbar-user" id="topbar-user" onclick="G.setUser(null)">
       <div class="user-pip" id="user-pip"></div>
       <span id="user-label">Giriş yap</span>
@@ -445,6 +483,7 @@ const USERS = {
 };
 
 let currentUser = localStorage.getItem('gg_user')||null;
+let currentTheme = localStorage.getItem('gg_theme')||'default';
 let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
 let session=null, formMoveIdx=null, formDiff='medium', formWarmupSets=[], formExtraSets=[];
@@ -591,9 +630,20 @@ function calcWeekVolume(uid){
   return{volume:Math.round(volume),sets};
 }
 
+function setTheme(t){
+  currentTheme=t;
+  if(t==='arcade')document.documentElement.setAttribute('data-theme','arcade');
+  else document.documentElement.removeAttribute('data-theme');
+  localStorage.setItem('gg_theme',t);
+}
+function cycleTheme(){setTheme(currentTheme==='arcade'?'default':'arcade');}
+function ath(def,arcade){return currentTheme==='arcade'?arcade:def;}
+
 function showWeekBadge(color, weeklyStreak){
   const PARTICLE_COUNT=40, AUTO_DISMISS_MS=3800, FADE_MS=350;
-  const COLORS=['#7c6af7','#9d8fff','#3ecf8e','#f5a623','#f06565',color];
+  const COLORS=currentTheme==='arcade'
+    ?['#f5e642','#00ffff','#ff6ef7','#00ff88','#ffffff','#ff4545']
+    :['#7c6af7','#9d8fff','#3ecf8e','#f5a623','#f06565',color];
   const MIN_SIZE=6, MAX_SIZE=14, MIN_TRAVEL=90, MAX_TRAVEL=220, MIN_DUR=700, MAX_DUR=1100;
   const rand=(a,b)=>a+Math.random()*(b-a);
   const pick=arr=>arr[Math.floor(rand(0,arr.length))];
@@ -602,10 +652,10 @@ function showWeekBadge(color, weeklyStreak){
   backdrop.className='wb-backdrop';
   backdrop.innerHTML=`<div class="wb-box">
     <div class="wb-glow" style="background:${color}"></div>
-    <div class="wb-emoji">🔥</div>
-    <div class="wb-title">Haftalık Hedef!</div>
-    <div class="wb-sub">3 antrenman tamamlandı</div>
-    ${weeklyStreak>1?`<div class="wb-streak">${weeklyStreak} haftalık seri! 🔥</div>`:''}
+    <div class="wb-emoji">${ath('🔥','⭐')}</div>
+    <div class="wb-title">${ath('Haftalık Hedef!','LEVEL UP!')}</div>
+    <div class="wb-sub">${ath('3 antrenman tamamlandı','QUEST DONE!')}</div>
+    ${weeklyStreak>1?`<div class="wb-streak">${weeklyStreak} ${ath('haftalık seri! 🔥','WEEK STREAK!')}</div>`:''}
   </div>`;
   document.body.appendChild(backdrop);
 
@@ -620,7 +670,7 @@ function showWeekBadge(color, weeklyStreak){
       p.className='wb-confetti';
       p.style.cssText=
         `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;`+
-        `background:${pick(COLORS)};border-radius:${Math.random()>.5?'3px':'50%'};`+
+        `background:${pick(COLORS)};border-radius:${currentTheme==='arcade'?'0':Math.random()>.5?'3px':'50%'};`+
         `--tx:${(Math.cos(angle)*distance).toFixed(1)}px;`+
         `--ty:${(Math.sin(angle)*distance).toFixed(1)}px;`+
         `--rot:${rand(-360,360).toFixed(1)}deg;`+
@@ -795,8 +845,8 @@ function renderHome(){
       <div class="hero-glow"></div>
       <div class="hero-content">
         <div class="hero-label">${new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})}</div>
-        <div class="hero-title">${myCI?'Harika iş! 🎉':'Bugün antrenman?'}</div>
-        <div class="hero-sub">${myCI?myCI.programId+' · '+myCI.moves.length+' hareket tamamlandı':'Haftalık hedef: 3 gün · '+myWeek+' tamamlandı'}</div>
+        <div class="hero-title">${myCI?ath('Harika iş! 🎉','QUEST DONE!'):ath('Bugün antrenman?','START GAME?')}</div>
+        <div class="hero-sub">${myCI?myCI.programId+' · '+myCI.moves.length+' '+ath('hareket tamamlandı','moves done'):ath('Haftalık hedef: 3 gün · ','Weekly goal: ')+(myWeek+ath(' tamamlandı',' done'))}</div>
       </div>
       <button class="hero-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ Bitti':'+ Başla'}</button>
     </div>
@@ -949,7 +999,7 @@ function renderWorkout(){
       <div class="hero" style="--hero-bg:linear-gradient(135deg,#1a2f22 0%,#1f3d2b 100%)">
         <div class="hero-glow"></div>
         <div class="hero-content">
-          <div class="hero-label" style="color:var(--green)">Tamamlandı 🎉</div>
+          <div class="hero-label" style="color:var(--green)">${ath('Tamamlandı 🎉','QUEST CLEAR! ⭐')}</div>
           <div class="hero-title">${existing.programId}</div>
           <div class="hero-sub">${existing.moves.length} hareket · ${existing.moves.reduce((s,m)=>s+(m.sets||0)+(m.extraSets||[]).reduce((a,e)=>a+(e.sets||0),0),0)} toplam set</div>
         </div>
@@ -1477,9 +1527,11 @@ window.G={
   sendReactionInline,sendCommentInline,toggleCommentInput,
   setChartExercise,setChartRange,showChartTip,hideChartTip,
   showWeekBadge,
+  cycleTheme,
   debugWeekCount(){ const u=USERS[currentUser]; console.log('weekBefore:',calcWeek(u.id),'calcWeeklyStreak:',calcWeeklyStreak(u.id)); }
 };
 
+setTheme(currentTheme);
 loadSession();
 listenAll();
 renderCurrent();

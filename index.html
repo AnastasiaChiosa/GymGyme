@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="GymGyme">
 <title>GymGyme</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Press+Start+2P&family=VT323&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --bg0:#0a0a0a;--bg1:#111113;--bg2:#1a1a1e;--bg3:#232328;--bg4:#2c2c33;
@@ -333,36 +333,107 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 
 /* ARCADE THEME */
 html[data-theme="arcade"]{
-  --bg0:#04041a;--bg1:#07071e;--bg2:#0d0d2e;--bg3:#13133e;--bg4:#191950;
-  --line:rgba(245,230,66,0.08);--line2:rgba(245,230,66,0.16);
-  --t0:#f5e642;--t1:#d8d8ff;--t2:#8080b8;--t3:#505080;
-  --accent:#f5e642;--accent2:#fff799;--abg:rgba(245,230,66,0.1);--abg2:rgba(245,230,66,0.2);
-  --green:#00ff88;--gbg:rgba(0,255,136,0.08);
+  --bg0:#0a0e17;--bg1:#0e1220;--bg2:#131728;--bg3:#1a1f32;--bg4:#22283e;
+  --line:rgba(204,255,0,0.08);--line2:rgba(204,255,0,0.2);
+  --t0:#ccff00;--t1:#c8d0e8;--t2:#7888a0;--t3:#485070;
+  --accent:#ccff00;--accent2:#eaff5e;--abg:rgba(204,255,0,0.1);--abg2:rgba(204,255,0,0.2);
+  --green:#00ffaa;--gbg:rgba(0,255,170,0.08);
   --amber:#ff6ef7;--ambg:rgba(255,110,247,0.08);
   --red:#ff4545;--rbg:rgba(255,69,69,0.08);
   --r-sm:0px;--r-md:0px;--r-lg:0px;--r-xl:0px;
 }
+html[data-theme="arcade"] .shell{
+  background:
+    linear-gradient(rgba(204,255,0,0.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(204,255,0,0.025) 1px,transparent 1px),
+    var(--bg0);
+  background-size:24px 24px,24px 24px,auto;
+}
+/* Press Start 2P — headings */
 html[data-theme="arcade"] .logo-text,
 html[data-theme="arcade"] .hero-title,
 html[data-theme="arcade"] .sh-title,
 html[data-theme="arcade"] .wb-title,
+html[data-theme="arcade"] .pc-name,
 html[data-theme="arcade"] .login-title{font-family:'Press Start 2P',monospace;letter-spacing:0;line-height:1.5;}
-html[data-theme="arcade"] .logo-text{font-size:11px;}
-html[data-theme="arcade"] .hero-title{font-size:13px;}
-html[data-theme="arcade"] .sh-title{font-size:13px;}
-html[data-theme="arcade"] .wb-title{font-size:11px;}
+html[data-theme="arcade"] .logo-text{font-size:10px;}
+html[data-theme="arcade"] .hero-title{font-size:12px;}
+html[data-theme="arcade"] .sh-title{font-size:12px;}
+html[data-theme="arcade"] .wb-title{font-size:10px;}
+html[data-theme="arcade"] .pc-name{font-size:13px;}
+/* VT323 — list/meta texts */
+html[data-theme="arcade"] .mr-name,html[data-theme="arcade"] .mr-meta,
+html[data-theme="arcade"] .pc-moves,
+html[data-theme="arcade"] .t-name,html[data-theme="arcade"] .t-pill,html[data-theme="arcade"] .t-moves,
+html[data-theme="arcade"] .stat-n,html[data-theme="arcade"] .stat-l,
+html[data-theme="arcade"] .sbb-n,html[data-theme="arcade"] .sbb-l,
+html[data-theme="arcade"] .notif-text,html[data-theme="arcade"] .notif-time,
+html[data-theme="arcade"] .hero-sub,html[data-theme="arcade"] .hero-label,
+html[data-theme="arcade"] .hero-btn,html[data-theme="arcade"] .nav-btn,
+html[data-theme="arcade"] .sec-label,
+html[data-theme="arcade"] .wb-sub,html[data-theme="arcade"] .wb-streak{font-family:'VT323',monospace;letter-spacing:0.5px;}
+html[data-theme="arcade"] .stat-n,html[data-theme="arcade"] .sbb-n{font-size:34px;}
+html[data-theme="arcade"] .hero-sub{font-size:17px;}
+html[data-theme="arcade"] .hero-btn{font-size:16px;}
+html[data-theme="arcade"] .nav-btn{font-size:12px;}
+/* Neon glow on accented text */
+html[data-theme="arcade"] .hero-title,
+html[data-theme="arcade"] .wb-title{text-shadow:0 0 8px #ccff00,0 0 24px rgba(204,255,0,0.4);}
+html[data-theme="arcade"] .nav-btn.active{text-shadow:0 0 10px currentColor,0 0 22px currentColor;}
+html[data-theme="arcade"] .stat-n,html[data-theme="arcade"] .sbb-n{text-shadow:0 0 10px currentColor;}
+/* Glassmorphism cards */
 html[data-theme="arcade"] .card,
 html[data-theme="arcade"] .today-card,
 html[data-theme="arcade"] .stat-box,
 html[data-theme="arcade"] .sbb,
 html[data-theme="arcade"] .move-row,
-html[data-theme="arcade"] .program-card,
+html[data-theme="arcade"] .program-card{
+  background:rgba(14,18,32,0.55);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:none;
+  box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(204,255,0,0.12),0 0 0 2px rgba(204,255,0,0.22);
+}
 html[data-theme="arcade"] .sheet,
-html[data-theme="arcade"] .modal{box-shadow:0 0 0 1px var(--accent);}
-html[data-theme="arcade"] .logo-mark{border-radius:0;box-shadow:0 0 0 1px var(--accent),0 0 14px var(--accent);}
-html[data-theme="arcade"] .nav-btn.active{text-shadow:0 0 10px currentColor;}
-html[data-theme="arcade"] .wb-box{border-radius:0;box-shadow:0 0 0 2px #f5e642,0 0 48px rgba(245,230,66,0.25);}
-html[data-theme="arcade"] body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,20,0.14) 2px,rgba(0,0,20,0.14) 4px);}
+html[data-theme="arcade"] .modal{background:rgba(14,18,32,0.92);box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(204,255,0,0.12),0 0 0 2px rgba(204,255,0,0.3);}
+/* NES-style pixel buttons */
+html[data-theme="arcade"] .hero-btn,
+html[data-theme="arcade"] .f-cancel,
+html[data-theme="arcade"] .f-save,
+html[data-theme="arcade"] .sh-finish,
+html[data-theme="arcade"] .modal-close,
+html[data-theme="arcade"] .btn-ghost,
+html[data-theme="arcade"] .sh-finish{
+  font-family:'VT323',monospace;font-size:18px;letter-spacing:1px;
+  border:none;
+  box-shadow:inset -4px -4px 0 #000,inset 4px 4px 0 rgba(255,255,255,0.18),0 4px 0 #000;
+  transition:box-shadow .07s,transform .07s;
+}
+html[data-theme="arcade"] .hero-btn:active,
+html[data-theme="arcade"] .f-cancel:active,
+html[data-theme="arcade"] .f-save:active,
+html[data-theme="arcade"] .sh-finish:active,
+html[data-theme="arcade"] .modal-close:active,
+html[data-theme="arcade"] .btn-ghost:active{
+  box-shadow:inset -2px -2px 0 #000,inset 2px 2px 0 rgba(255,255,255,0.18),0 2px 0 #000;
+  transform:translateY(2px);
+}
+/* Inputs */
+html[data-theme="arcade"] .f-input{
+  font-family:'VT323',monospace;font-size:18px;
+  border:none;
+  box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(255,255,255,0.08);
+}
+html[data-theme="arcade"] .f-input:focus{box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(204,255,0,0.28);}
+/* Topbar & bottom nav borders */
+html[data-theme="arcade"] .topbar{border-bottom:2px solid #ccff00;box-shadow:0 4px 0 #000,0 0 20px rgba(204,255,0,0.1);}
+html[data-theme="arcade"] .bottom-nav{border-top:2px solid #ccff00;box-shadow:0 -4px 0 #000,0 0 20px rgba(204,255,0,0.1);}
+/* Logo mark */
+html[data-theme="arcade"] .logo-mark{border-radius:0;box-shadow:0 0 0 2px #ccff00,0 0 16px rgba(204,255,0,0.45);}
+/* Week badge */
+html[data-theme="arcade"] .wb-box{border-radius:0;background:rgba(14,18,32,0.9);box-shadow:inset -4px -4px 0 #000,inset 4px 4px 0 rgba(204,255,0,0.1),0 0 0 3px #ccff00,0 0 48px rgba(204,255,0,0.3);}
+/* Scanlines */
+html[data-theme="arcade"] body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,10,0.13) 2px,rgba(0,0,10,0.13) 4px);}
 </style>
 </head>
 <body>
@@ -642,7 +713,7 @@ function ath(def,arcade){return currentTheme==='arcade'?arcade:def;}
 function showWeekBadge(color, weeklyStreak){
   const PARTICLE_COUNT=40, AUTO_DISMISS_MS=3800, FADE_MS=350;
   const COLORS=currentTheme==='arcade'
-    ?['#f5e642','#00ffff','#ff6ef7','#00ff88','#ffffff','#ff4545']
+    ?['#ccff00','#00ffff','#ff6ef7','#00ffaa','#ffffff','#ff4545']
     :['#7c6af7','#9d8fff','#3ecf8e','#f5a623','#f06565',color];
   const MIN_SIZE=6, MAX_SIZE=14, MIN_TRAVEL=90, MAX_TRAVEL=220, MIN_DUR=700, MAX_DUR=1100;
   const rand=(a,b)=>a+Math.random()*(b-a);

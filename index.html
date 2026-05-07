@@ -123,17 +123,24 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 @keyframes toastOut{to{opacity:0;transform:translateY(-8px);}}
 
 /* WEEK BADGE */
-.wb-backdrop{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:wbFadeIn .25s ease;}
+.wb-backdrop{position:fixed;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.65);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:wbFadeIn .2s ease both;}
 @keyframes wbFadeIn{from{opacity:0;}to{opacity:1;}}
-.wb-box{background:var(--bg2);border:0.5px solid rgba(255,255,255,0.1);border-radius:28px;padding:36px 44px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 28px 72px rgba(0,0,0,0.65);position:relative;overflow:hidden;animation:wbPop .5s cubic-bezier(0.34,1.56,0.64,1);}
-@keyframes wbPop{from{opacity:0;transform:scale(0.55);}to{opacity:1;transform:scale(1);}}
-.wb-glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;filter:blur(50px);opacity:0.3;pointer-events:none;}
-.wb-emoji{font-size:56px;animation:wbBounce .55s cubic-bezier(0.34,1.56,0.64,1) .08s both;position:relative;z-index:1;}
-@keyframes wbBounce{from{transform:scale(0) rotate(-15deg);}to{transform:scale(1) rotate(0deg);}}
-.wb-title{font-size:21px;font-weight:800;color:#fff;letter-spacing:-0.5px;position:relative;z-index:1;}
-.wb-sub{font-size:13px;color:var(--t2);position:relative;z-index:1;}
-.wb-star{position:absolute;font-size:16px;pointer-events:none;animation:wbStar 1.1s ease forwards;}
-@keyframes wbStar{0%{opacity:0;transform:scale(0) translate(0,0);}25%{opacity:1;transform:scale(1.2) translate(0,0);}100%{opacity:0;transform:scale(0.6) translate(var(--dx),var(--dy));}}
+.wb-backdrop.wb-out{animation:wbBackdropOut .35s ease forwards;}
+@keyframes wbBackdropOut{to{opacity:0;}}
+.wb-box{background:var(--bg2);border:0.5px solid rgba(255,255,255,0.12);border-radius:28px;padding:36px 48px 32px;display:flex;flex-direction:column;align-items:center;gap:10px;box-shadow:0 32px 80px rgba(0,0,0,0.7);position:relative;overflow:visible;animation:wbPop .55s cubic-bezier(0.34,1.7,0.64,1) 80ms both;min-width:260px;}
+@keyframes wbPop{from{opacity:0;transform:scale(0.4) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.wb-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:240px;height:240px;border-radius:50%;filter:blur(60px);opacity:0.22;pointer-events:none;z-index:0;}
+.wb-emoji{font-size:64px;position:relative;z-index:1;animation:wbBounce .6s cubic-bezier(0.34,1.9,0.64,1) 180ms both;}
+@keyframes wbBounce{from{transform:scale(0) rotate(-20deg);opacity:0;}to{transform:scale(1) rotate(0deg);opacity:1;}}
+.wb-title{font-size:23px;font-weight:800;color:var(--t0);letter-spacing:-0.6px;position:relative;z-index:1;animation:wbTitleUp .4s cubic-bezier(0.34,1.4,0.64,1) 320ms both;}
+@keyframes wbTitleUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+.wb-sub{font-size:14px;color:var(--t2);position:relative;z-index:1;text-align:center;line-height:1.5;animation:wbSubIn .35s ease 420ms both;}
+.wb-streak{font-size:13px;font-weight:700;color:var(--amber);position:relative;z-index:1;animation:wbSubIn .35s ease 500ms both;}
+@keyframes wbSubIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.wb-star{display:none;}
+@keyframes wbStar{from{}to{}}
+.wb-confetti{position:fixed;pointer-events:none;z-index:299;animation:wbConfetti var(--dur) cubic-bezier(0.2,0.8,0.4,1) var(--delay) both;transform-origin:center;}
+@keyframes wbConfetti{0%{opacity:1;transform:translate(0,0) rotate(0deg) scale(1);}80%{opacity:0.9;}100%{opacity:0;transform:translate(var(--tx),var(--ty)) rotate(var(--rot)) scale(0.4);}}
 .toast-icon{font-size:20px;flex-shrink:0;}
 .toast-title{font-size:13px;font-weight:600;color:var(--t0);}
 .toast-sub{font-size:12px;color:var(--t2);margin-top:1px;}
@@ -575,19 +582,56 @@ function calcWeekVolume(uid){
   return{volume:Math.round(volume),sets};
 }
 
-function showWeekBadge(color){
-  const stars=[{top:'12%',left:'14%',dx:'-28px',dy:'-22px'},{top:'10%',right:'14%',dx:'28px',dy:'-22px'},{top:'44%',left:'6%',dx:'-32px',dy:'4px'},{top:'44%',right:'6%',dx:'32px',dy:'4px'},{top:'76%',left:'16%',dx:'-18px',dy:'24px'},{top:'76%',right:'16%',dx:'18px',dy:'24px'}];
-  const emojis=['✨','⭐','💫','🌟','✨','⭐'];
-  const starsHTML=stars.map((p,i)=>{
-    const pos=Object.entries(p).filter(([k])=>k!=='dx'&&k!=='dy').map(([k,v])=>`${k}:${v}`).join(';');
-    return `<span class="wb-star" style="${pos};--dx:${p.dx};--dy:${p.dy};animation-delay:${i*0.07}s">${emojis[i]}</span>`;
-  }).join('');
-  const el=document.createElement('div');
-  el.className='wb-backdrop';
-  el.innerHTML=`<div class="wb-box"><div class="wb-glow" style="background:${color}"></div>${starsHTML}<div class="wb-emoji">🔥</div><div class="wb-title">Haftalık Hedef!</div><div class="wb-sub">3 antrenman tamamlandı</div></div>`;
-  document.body.appendChild(el);
-  el.addEventListener('click',()=>{el.style.transition='opacity .2s';el.style.opacity='0';setTimeout(()=>el.remove(),200);});
-  setTimeout(()=>{el.style.transition='opacity .35s';el.style.opacity='0';setTimeout(()=>el.remove(),350);},2800);
+function showWeekBadge(color, weeklyStreak){
+  const PARTICLE_COUNT=40, AUTO_DISMISS_MS=3800, FADE_MS=350;
+  const COLORS=['#7c6af7','#9d8fff','#3ecf8e','#f5a623','#f06565',color];
+  const MIN_SIZE=6, MAX_SIZE=14, MIN_TRAVEL=90, MAX_TRAVEL=220, MIN_DUR=700, MAX_DUR=1100;
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  const pick=arr=>arr[Math.floor(rand(0,arr.length))];
+
+  const backdrop=document.createElement('div');
+  backdrop.className='wb-backdrop';
+  backdrop.innerHTML=`<div class="wb-box">
+    <div class="wb-glow" style="background:${color}"></div>
+    <div class="wb-emoji">🔥</div>
+    <div class="wb-title">Haftalık Hedef!</div>
+    <div class="wb-sub">3 antrenman tamamlandı</div>
+    ${weeklyStreak>1?`<div class="wb-streak">${weeklyStreak} haftalık seri! 🔥</div>`:''}
+  </div>`;
+  document.body.appendChild(backdrop);
+
+  requestAnimationFrame(()=>{
+    const rect=backdrop.querySelector('.wb-box').getBoundingClientRect();
+    const cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
+
+    const particles=Array.from({length:PARTICLE_COUNT},()=>{
+      const angle=rand(0,Math.PI*2), distance=rand(MIN_TRAVEL,MAX_TRAVEL);
+      const size=rand(MIN_SIZE,MAX_SIZE), dur=rand(MIN_DUR,MAX_DUR), delay=rand(0,120);
+      const p=document.createElement('div');
+      p.className='wb-confetti';
+      p.style.cssText=
+        `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;`+
+        `background:${pick(COLORS)};border-radius:${Math.random()>.5?'3px':'50%'};`+
+        `--tx:${(Math.cos(angle)*distance).toFixed(1)}px;`+
+        `--ty:${(Math.sin(angle)*distance).toFixed(1)}px;`+
+        `--rot:${rand(-360,360).toFixed(1)}deg;`+
+        `--dur:${dur.toFixed(0)}ms;--delay:${delay.toFixed(0)}ms;`+
+        `margin-left:${(-size/2).toFixed(1)}px;margin-top:${(-size/2).toFixed(1)}px;`;
+      return p;
+    });
+    particles.forEach(p=>document.body.insertBefore(p,backdrop));
+
+    let dismissed=false;
+    const dismiss=()=>{
+      if(dismissed)return;
+      dismissed=true;
+      backdrop.classList.add('wb-out');
+      particles.forEach(p=>{p.style.transition=`opacity ${FADE_MS}ms ease`;p.style.opacity='0';});
+      setTimeout(()=>{backdrop.remove();particles.forEach(p=>p.remove());},FADE_MS);
+    };
+    backdrop.addEventListener('click',dismiss);
+    setTimeout(dismiss,AUTO_DISMISS_MS);
+  });
 }
 
 function showToast(icon,title,sub){
@@ -1321,7 +1365,7 @@ async function finishSession(){
     seenBy:[u.id]
   };
   await saveNotif(finishNotif);
-  if(saveDate===today && weekBefore+1===3) showWeekBadge(u.color);
+  if(saveDate===today && weekBefore+1===3) showWeekBadge(u.color, calcWeeklyStreak(u.id));
   session=null;saveSession();G.nav('home');
 }
 function openSheet(idx){

@@ -327,6 +327,12 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .ct-weight{font-size:15px;font-weight:700;line-height:1.2;}
 .ct-date{font-size:11px;color:var(--t3);margin-top:2px;}
 
+/* STATS TABS */
+.stats-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.stats-tab{display:flex;align-items:center;justify-content:center;gap:8px;padding:11px 10px;background:var(--bg2);border:0.5px solid var(--line2);border-radius:var(--r-md);cursor:pointer;font-size:14px;font-weight:600;color:var(--t2);font-family:var(--font);transition:all .15s;}
+.stats-tab.active{background:var(--abg);border-color:var(--tab-color,var(--accent));color:var(--t0);box-shadow:0 0 0 1px var(--tab-color,var(--accent));}
+.tab-av{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+
 /* THEME TOGGLE */
 .theme-toggle{background:none;border:0.5px solid var(--line2);border-radius:var(--r-sm);padding:5px 9px;font-size:16px;cursor:pointer;opacity:0.75;transition:opacity .15s;line-height:1;flex-shrink:0;}
 .theme-toggle:hover{opacity:1;}
@@ -341,6 +347,7 @@ html[data-theme="arcade"]{
   --amber:#ff6ef7;--ambg:rgba(255,110,247,0.08);
   --red:#ff4545;--rbg:rgba(255,69,69,0.08);
   --r-sm:0px;--r-md:0px;--r-lg:0px;--r-xl:0px;
+  font-size:19px;
 }
 html[data-theme="arcade"] .shell{
   background:
@@ -349,33 +356,50 @@ html[data-theme="arcade"] .shell{
     var(--bg0);
   background-size:24px 24px,24px 24px,auto;
 }
-/* Press Start 2P — headings */
+/* Press Start 2P — headings (rem relative to 19px base) */
 html[data-theme="arcade"] .logo-text,
 html[data-theme="arcade"] .hero-title,
 html[data-theme="arcade"] .sh-title,
 html[data-theme="arcade"] .wb-title,
 html[data-theme="arcade"] .pc-name,
-html[data-theme="arcade"] .login-title{font-family:'Press Start 2P',monospace;letter-spacing:0;line-height:1.5;}
-html[data-theme="arcade"] .logo-text{font-size:10px;}
-html[data-theme="arcade"] .hero-title{font-size:12px;}
-html[data-theme="arcade"] .sh-title{font-size:12px;}
-html[data-theme="arcade"] .wb-title{font-size:10px;}
-html[data-theme="arcade"] .pc-name{font-size:13px;}
-/* VT323 — list/meta texts */
+html[data-theme="arcade"] .login-title{font-family:'Press Start 2P',monospace;letter-spacing:0;line-height:1.6;}
+html[data-theme="arcade"] .logo-text{font-size:0.62rem;}
+html[data-theme="arcade"] .hero-title{font-size:1.05rem;}
+html[data-theme="arcade"] .sh-title{font-size:1.2rem;}
+html[data-theme="arcade"] .wb-title{font-size:0.9rem;}
+html[data-theme="arcade"] .pc-name{font-size:1.1rem;}
+html[data-theme="arcade"] .login-title{font-size:1.2rem;}
+/* VT323 — list/meta texts (min 1.1rem) */
 html[data-theme="arcade"] .mr-name,html[data-theme="arcade"] .mr-meta,
 html[data-theme="arcade"] .pc-moves,
 html[data-theme="arcade"] .t-name,html[data-theme="arcade"] .t-pill,html[data-theme="arcade"] .t-moves,
-html[data-theme="arcade"] .stat-n,html[data-theme="arcade"] .stat-l,
-html[data-theme="arcade"] .sbb-n,html[data-theme="arcade"] .sbb-l,
 html[data-theme="arcade"] .notif-text,html[data-theme="arcade"] .notif-time,
 html[data-theme="arcade"] .hero-sub,html[data-theme="arcade"] .hero-label,
-html[data-theme="arcade"] .hero-btn,html[data-theme="arcade"] .nav-btn,
-html[data-theme="arcade"] .sec-label,
-html[data-theme="arcade"] .wb-sub,html[data-theme="arcade"] .wb-streak{font-family:'VT323',monospace;letter-spacing:0.5px;}
-html[data-theme="arcade"] .stat-n,html[data-theme="arcade"] .sbb-n{font-size:34px;}
-html[data-theme="arcade"] .hero-sub{font-size:17px;}
-html[data-theme="arcade"] .hero-btn{font-size:16px;}
-html[data-theme="arcade"] .nav-btn{font-size:12px;}
+html[data-theme="arcade"] .hero-btn,html[data-theme="arcade"] .sec-label,
+html[data-theme="arcade"] .wb-sub,html[data-theme="arcade"] .wb-streak,
+html[data-theme="arcade"] .stat-l,html[data-theme="arcade"] .sbb-l,
+html[data-theme="arcade"] .card-title,html[data-theme="arcade"] .mbr-name,
+html[data-theme="arcade"] .mbr-count,html[data-theme="arcade"] .pr-name,
+html[data-theme="arcade"] .pr-lbl,html[data-theme="arcade"] .sri-lbl,
+html[data-theme="arcade"] .sri-val{font-family:'VT323',monospace;letter-spacing:0.4px;line-height:1.5;}
+html[data-theme="arcade"] .mr-name,html[data-theme="arcade"] .pc-moves,
+html[data-theme="arcade"] .t-name,html[data-theme="arcade"] .hero-sub,
+html[data-theme="arcade"] .notif-text,html[data-theme="arcade"] .sec-label,
+html[data-theme="arcade"] .mbr-name,html[data-theme="arcade"] .pr-name,
+html[data-theme="arcade"] .sri-lbl,html[data-theme="arcade"] .sri-val{font-size:1.1rem;}
+html[data-theme="arcade"] .mr-meta,html[data-theme="arcade"] .t-pill,
+html[data-theme="arcade"] .t-moves,html[data-theme="arcade"] .hero-label,
+html[data-theme="arcade"] .wb-sub,html[data-theme="arcade"] .wb-streak,
+html[data-theme="arcade"] .stat-l,html[data-theme="arcade"] .sbb-l,
+html[data-theme="arcade"] .card-title,html[data-theme="arcade"] .pr-lbl,
+html[data-theme="arcade"] .mbr-count,html[data-theme="arcade"] .notif-time{font-size:1.0rem;}
+/* Stat/PR numbers — large VT323 */
+html[data-theme="arcade"] .stat-n,html[data-theme="arcade"] .sbb-n{font-family:'VT323',monospace;font-size:1.9rem;letter-spacing:0;line-height:1.1;}
+html[data-theme="arcade"] .pr-weight{font-family:'VT323',monospace;font-size:1.35rem;line-height:1.3;}
+/* Nav buttons — smaller to fit 5 in a row */
+html[data-theme="arcade"] .nav-btn{font-family:'VT323',monospace;font-size:0.72rem;line-height:1.4;}
+/* Hero button */
+html[data-theme="arcade"] .hero-btn{font-size:1.0rem;}
 /* Neon glow on accented text */
 html[data-theme="arcade"] .hero-title,
 html[data-theme="arcade"] .wb-title{text-shadow:0 0 8px #ccff00,0 0 24px rgba(204,255,0,0.4);}
@@ -402,9 +426,8 @@ html[data-theme="arcade"] .f-cancel,
 html[data-theme="arcade"] .f-save,
 html[data-theme="arcade"] .sh-finish,
 html[data-theme="arcade"] .modal-close,
-html[data-theme="arcade"] .btn-ghost,
-html[data-theme="arcade"] .sh-finish{
-  font-family:'VT323',monospace;font-size:18px;letter-spacing:1px;
+html[data-theme="arcade"] .btn-ghost{
+  font-family:'VT323',monospace;font-size:1.1rem;letter-spacing:1px;
   border:none;
   box-shadow:inset -4px -4px 0 #000,inset 4px 4px 0 rgba(255,255,255,0.18),0 4px 0 #000;
   transition:box-shadow .07s,transform .07s;
@@ -420,11 +443,15 @@ html[data-theme="arcade"] .btn-ghost:active{
 }
 /* Inputs */
 html[data-theme="arcade"] .f-input{
-  font-family:'VT323',monospace;font-size:18px;
+  font-family:'VT323',monospace;font-size:1.1rem;
   border:none;
   box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(255,255,255,0.08);
 }
 html[data-theme="arcade"] .f-input:focus{box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(204,255,0,0.28);}
+/* Stats tabs — arcade style */
+html[data-theme="arcade"] .stats-tab{font-family:'VT323',monospace;font-size:1.15rem;line-height:1.4;box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(255,255,255,0.06);}
+html[data-theme="arcade"] .stats-tab.active{background:rgba(204,255,0,0.12);border:none;color:#ccff00;box-shadow:inset -3px -3px 0 #000,inset 3px 3px 0 rgba(204,255,0,0.2),0 0 0 2px #ccff00,0 0 12px rgba(204,255,0,0.2);}
+html[data-theme="arcade"] .tab-av{border-radius:0;}
 /* Topbar & bottom nav borders */
 html[data-theme="arcade"] .topbar{border-bottom:2px solid #ccff00;box-shadow:0 4px 0 #000,0 0 20px rgba(204,255,0,0.1);}
 html[data-theme="arcade"] .bottom-nav{border-top:2px solid #ccff00;box-shadow:0 -4px 0 #000,0 0 20px rgba(204,255,0,0.1);}
@@ -555,6 +582,7 @@ const USERS = {
 
 let currentUser = localStorage.getItem('gg_user')||null;
 let currentTheme = localStorage.getItem('gg_theme')||'default';
+let statsTab = null;
 let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
 let session=null, formMoveIdx=null, formDiff='medium', formWarmupSets=[], formExtraSets=[];
@@ -709,6 +737,7 @@ function setTheme(t){
 }
 function cycleTheme(){setTheme(currentTheme==='arcade'?'default':'arcade');}
 function ath(def,arcade){return currentTheme==='arcade'?arcade:def;}
+function switchStatsTab(key){statsTab=key;renderStats();}
 
 function showWeekBadge(color, weeklyStreak){
   const PARTICLE_COUNT=40, AUTO_DISMISS_MS=3800, FADE_MS=350;
@@ -1223,13 +1252,13 @@ function renderCalendar(){
 /* ── STATS ── */
 function renderStats(){
   const el=document.getElementById('app');
-  const rows=Object.values(USERS).map(u=>{
+  if(!statsTab)statsTab=currentUser||'me';
+  const rows=Object.entries(USERS).map(([key,u])=>{
     const cis=getCIForUser(u.id);
     const streak=calcStreak(u.id),maxStreak=calcMaxStreak(u.id),week=calcWeek(u.id);
     const allMoves=cis.flatMap(c=>c.moves||[]);
     const mc={};allMoves.forEach(m=>{mc[m.name]=(mc[m.name]||0)+1;});
     const top3=Object.entries(mc).sort((a,b)=>b[1]-a[1]).slice(0,3);
-    const totalSets=allMoves.reduce((s,m)=>s+(parseInt(m.sets)||0)+(m.extraSets||[]).reduce((a,e)=>a+(parseInt(e.sets)||0),0),0);
     const pcs={};cis.forEach(c=>{pcs[c.programId]=(pcs[c.programId]||0)+1;});
     const topP=Object.entries(pcs).sort((a,b)=>b[1]-a[1])[0];
     const prs=Object.entries(prRecords)
@@ -1237,14 +1266,15 @@ function renderStats(){
       .map(([k,v])=>({name:k.replace(u.id+'_',''),w:v}))
       .sort((a,b)=>b.w-a.w)
       .slice(0,4);
-    return{u,cis,streak,maxStreak,week,allMoves,top3,totalSets,topP,prs};
+    return{key,u,cis,streak,maxStreak,week,allMoves,top3,topP,prs};
   });
+  const r=rows.find(row=>row.key===statsTab)||rows[0];
   el.innerHTML=`<div class="page">
     <div class="sec-label">Genel</div>
     <div class="stat-row">
-      ${rows.map(r=>`<div class="stat-box">
-        <div class="t-avatar" style="background:${r.u.clight};color:${r.u.color};margin:0 auto 6px;width:32px;height:32px;font-size:13px">${r.u.initials}</div>
-        <div class="stat-n" style="color:${r.u.color}">${r.cis.length}</div>
+      ${rows.map(row=>`<div class="stat-box">
+        <div class="t-avatar" style="background:${row.u.clight};color:${row.u.color};margin:0 auto 6px;width:32px;height:32px;font-size:13px">${row.u.initials}</div>
+        <div class="stat-n" style="color:${row.u.color}">${row.cis.length}</div>
         <div class="stat-l">toplam gün</div>
       </div>`).join('')}
       <div class="stat-box">
@@ -1252,27 +1282,30 @@ function renderStats(){
         <div class="stat-l">önde</div>
       </div>
     </div>
-    ${rows.map(r=>`
-      <div class="sec-label" style="color:${r.u.color}">${r.u.name}</div>
-      <div class="stat-big-row">
-        <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.streak}</div><div class="sbb-l">streak</div></div>
-        <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.maxStreak}</div><div class="sbb-l">en uzun</div></div>
-        <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.week}</div><div class="sbb-l">bu hafta</div></div>
-      </div>
-      ${r.topP?`<div class="stat-row-item"><span class="sri-lbl">En çok yapılan program</span><span class="sri-val" style="color:${r.u.color}">${r.topP[0]} (${r.topP[1]}×)</span></div>`:''}
-      ${r.top3.length?`<div class="card"><div class="card-pad"><div class="card-title">En çok yapılan hareketler</div>
-        ${r.top3.map(([name,cnt])=>`<div class="move-bar-row">
-          <div class="mbr-name">${name}</div>
-          <div class="mbr-track"><div class="mbr-fill" style="width:${Math.round((cnt/r.top3[0][1])*100)}%;background:${r.u.color}"></div></div>
-          <div class="mbr-count">${cnt}×</div>
-        </div>`).join('')}
-      </div></div>`:''}
-      ${r.prs.length?`<div class="card"><div class="card-pad"><div class="card-title">🏆 Kişisel Rekorlar</div>
-        ${r.prs.map(p=>`<div class="pr-row"><div class="pr-name">${p.name}</div><div><div class="pr-weight">${p.w}kg</div><div class="pr-lbl">PR</div></div></div>`).join('')}
-      </div></div>`:''}
-      <div class="sec-label" style="color:${r.u.color}">${r.u.name} · İlerleme</div>
-      <div class="card">${renderProgressChart(r.u.id,r.u.color,r.u===USERS.me?'me':'friend')}</div>
-    `).join('')}
+    <div class="stats-tabs">
+      ${rows.map(row=>`<button class="stats-tab${row.key===statsTab?' active':''}" style="${row.key===statsTab?'--tab-color:'+row.u.color+';':''}" onclick="G.switchStatsTab('${row.key}')">
+        <div class="tab-av" style="background:${row.u.clight};color:${row.u.color}">${row.u.initials}</div>
+        <span>${row.u.name}</span>
+      </button>`).join('')}
+    </div>
+    <div class="stat-big-row">
+      <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.streak}</div><div class="sbb-l">streak</div></div>
+      <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.maxStreak}</div><div class="sbb-l">en uzun</div></div>
+      <div class="sbb"><div class="sbb-n" style="color:${r.u.color}">${r.week}</div><div class="sbb-l">bu hafta</div></div>
+    </div>
+    ${r.topP?`<div class="stat-row-item"><span class="sri-lbl">En çok yapılan program</span><span class="sri-val" style="color:${r.u.color}">${r.topP[0]} (${r.topP[1]}×)</span></div>`:''}
+    ${r.top3.length?`<div class="card"><div class="card-pad"><div class="card-title">En çok yapılan hareketler</div>
+      ${r.top3.map(([name,cnt])=>`<div class="move-bar-row">
+        <div class="mbr-name">${name}</div>
+        <div class="mbr-track"><div class="mbr-fill" style="width:${Math.round((cnt/r.top3[0][1])*100)}%;background:${r.u.color}"></div></div>
+        <div class="mbr-count">${cnt}×</div>
+      </div>`).join('')}
+    </div></div>`:''}
+    ${r.prs.length?`<div class="card"><div class="card-pad"><div class="card-title">🏆 Kişisel Rekorlar</div>
+      ${r.prs.map(p=>`<div class="pr-row"><div class="pr-name">${p.name}</div><div><div class="pr-weight">${p.w}kg</div><div class="pr-lbl">PR</div></div></div>`).join('')}
+    </div></div>`:''}
+    <div class="sec-label" style="color:${r.u.color}">${r.u.name} · İlerleme</div>
+    <div class="card">${renderProgressChart(r.u.id,r.u.color,r.key)}</div>
   </div>`;
 }
 
@@ -1586,6 +1619,7 @@ window.G={
   },
   setUser(k){
     currentUser=k;
+    statsTab=k;
     if(k)localStorage.setItem('gg_user',k);else localStorage.removeItem('gg_user');
     session=null;renderCurrent();
   },
@@ -1599,6 +1633,7 @@ window.G={
   setChartExercise,setChartRange,showChartTip,hideChartTip,
   showWeekBadge,
   cycleTheme,
+  switchStatsTab,
   debugWeekCount(){ const u=USERS[currentUser]; console.log('weekBefore:',calcWeek(u.id),'calcWeeklyStreak:',calcWeeklyStreak(u.id)); }
 };
 

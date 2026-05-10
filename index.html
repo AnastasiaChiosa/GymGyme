@@ -104,18 +104,18 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .hw-corner.bl{bottom:8px;left:8px;} .hw-corner.br{bottom:8px;right:8px;}
 /* HOME — ASYMMETRIC GRID */
 .asym-grid{display:grid;grid-template-columns:2fr 1fr;grid-template-rows:auto auto;gap:10px;}
-.asym-streak{grid-row:span 2;background:var(--bg2);border-radius:var(--r-lg);border:0.5px solid var(--line2);padding:16px;display:flex;flex-direction:column;gap:5px;}
+.asym-streak{grid-row:span 2;background:var(--bg2);border-radius:var(--r-lg);border:3px solid var(--green);padding:20px 16px;display:flex;flex-direction:column;gap:8px;}
 .as-label{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.1em;}
-.as-num{font-size:44px;font-weight:800;line-height:1;letter-spacing:-2px;}
+.as-num{font-size:80px;font-weight:800;line-height:0.9;letter-spacing:-3px;color:var(--green);margin:8px 0;}
 .as-sub{font-size:11px;color:var(--t2);}
 .as-divider{height:0.5px;background:var(--line2);margin:4px 0;}
 .as-mini{font-size:12px;color:var(--t2);display:flex;align-items:center;gap:5px;}
 .as-mini span{font-weight:700;}
-.asym-uc{background:var(--bg2);border-radius:var(--r-md);border:0.5px solid var(--line2);padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:5px;transition:border-color .15s;}
+.asym-uc{background:var(--bg2);border-radius:var(--r-md);border:3px solid var(--uc-color,var(--accent));padding:16px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;transition:border-color .15s;min-height:100px;}
 .asym-uc.done{border-color:var(--uc-color,var(--accent));}
-.uc-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;}
-.uc-name{font-size:11px;font-weight:600;color:var(--t1);}
-.uc-check{font-size:17px;font-weight:700;}
+.uc-av{width:48px;height:48px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;border:2px solid var(--uc-color,var(--accent));}
+.uc-name{font-size:14px;font-weight:600;color:var(--t1);}
+.uc-check{font-size:24px;font-weight:700;}
 /* HOME — BU HAFTA HEADER */
 .bh-header{display:flex;align-items:center;gap:8px;padding:2px 0;}
 .bh-accent{width:3px;height:16px;background:var(--accent);border-radius:2px;flex-shrink:0;}
@@ -124,8 +124,8 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .bh-dot{width:5px;height:5px;background:var(--accent);opacity:0.4;}
 /* HOME — WEEK GRID */
 .wk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-.wk-box{background:var(--bg2);border-radius:var(--r-md);border:0.5px solid var(--line2);padding:14px;text-align:center;}
-.wk-n{font-size:30px;font-weight:800;line-height:1;letter-spacing:-1px;}
+.wk-box{background:var(--bg2);border-radius:var(--r-md);border:3px solid var(--uc-color,var(--accent));padding:20px 14px;text-align:center;}
+.wk-n{font-size:48px;font-weight:800;line-height:1;letter-spacing:-2px;}
 .wk-l{font-size:11px;color:var(--t3);margin-top:4px;font-weight:500;}
 /* HOME — START BUTTON */
 .hw-start-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:var(--abg);border:0.5px solid var(--accent);border-radius:var(--r-md);color:var(--accent);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .15s;}
@@ -515,7 +515,7 @@ html[data-theme="arcade"] .hw-start-btn.done{box-shadow:none;border:2px solid rg
 html[data-theme="arcade"] .hw-corner{background:rgba(255,255,255,0.5);}
 </style>
 </head>
-<body>
+<body style="background-color: rgb(34, 31, 31)">
 <div class="shell">
   <div class="topbar">
     <div class="logo">
@@ -1043,40 +1043,40 @@ function renderHome(){
     </div>
     <div class="asym-grid">
       <div class="asym-streak">
-        <div class="as-label">🔥 Streak</div>
-        <div class="as-num" style="color:${u.color}">${myStreak}</div>
-        <div class="as-sub">haftalık seri</div>
+        <div class="as-label">🔥 STREAK</div>
+        <div class="as-num">${myStreak}</div>
+        <div class="as-sub">HAFTA ÜSTÜSTE!</div>
         <div class="as-divider"></div>
         <div class="as-mini"><span style="color:${u.color}">${myStreak}</span> ${u.initials}</div>
         <div class="as-mini"><span style="color:${friend.color}">${frStreak}</span> ${friend.initials}</div>
       </div>
       <div class="asym-uc ${myCI?'done':''}" style="--uc-color:${u.color}">
-        <div class="uc-av" style="background:${u.color}">${u.initials}</div>
+        <div class="uc-av" style="background:transparent;color:${u.color}">${u.initials}</div>
         <div class="uc-name">${u.name}</div>
         <div class="uc-check" style="color:${myCI?u.color:'var(--t3)'}">${myCI?'✓':'—'}</div>
       </div>
       <div class="asym-uc ${frCI?'done':''}" style="--uc-color:${friend.color}">
-        <div class="uc-av" style="background:${friend.color}">${friend.initials}</div>
+        <div class="uc-av" style="background:transparent;color:${friend.color}">${friend.initials}</div>
         <div class="uc-name">${friend.name}</div>
         <div class="uc-check" style="color:${frCI?friend.color:'var(--t3)'}">${frCI?'✓':'—'}</div>
       </div>
     </div>
     <div class="bh-header">
       <div class="bh-accent"></div>
-      <div class="bh-title">Bu Hafta</div>
+      <div class="bh-title">BU HAFTA</div>
       <div class="bh-dots"><div class="bh-dot"></div><div class="bh-dot"></div></div>
     </div>
     <div class="wk-grid">
       <div class="wk-box">
         <div class="wk-n" style="color:${u.color}">${myWeek}</div>
-        <div class="wk-l">${u.name}</div>
+        <div class="wk-l">Enikgül</div>
       </div>
       <div class="wk-box">
         <div class="wk-n" style="color:${friend.color}">${frWeek}</div>
-        <div class="wk-l">${friend.name}</div>
+        <div class="wk-l">Eniş</div>
       </div>
     </div>
-    <button class="hw-start-btn ${myCI?'done':''}" style="${myCI?'border-color:'+u.color+';color:'+u.color:''}" onclick="G.nav('workout')">${myCI?'✓ '+u.name+' – Bitti':'+ Antrenman Başlat'}</button>
+    <button class="hw-start-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ BAŞLA':'+ BAŞLA'}</button>
     <button class="switch-link" onclick="G.setUser(null)">Kullanıcı değiştir</button>
   </div>`;
 }

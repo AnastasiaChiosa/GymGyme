@@ -378,21 +378,6 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .mma-note-block{background:var(--bg1);border:0.5px solid var(--line2);border-radius:var(--r-md);padding:14px;margin-bottom:10px;}
 .mma-note-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
 .mma-note-text{font-size:14px;color:var(--t1);line-height:1.5;white-space:pre-wrap;word-break:break-word;}
-/* MMA STATS */
-.stats-view-toggle{display:flex;gap:6px;background:var(--bg2);border:0.5px solid var(--line2);border-radius:var(--r-md);padding:4px;margin-bottom:6px;}
-.svt-btn{flex:1;padding:9px;border:none;border-radius:var(--r-sm);background:transparent;color:var(--t2);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:background .15s,color .15s;}
-.svt-btn.active{background:var(--bg4);color:var(--t0);}
-.svt-btn.mma.active{background:var(--rbg);color:var(--red);}
-.mma-chip.active{background:var(--rbg);color:var(--red);border-color:rgba(240,101,101,0.4);}
-.mma-lib-date{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:4px;padding-left:2px;}
-.mma-tl-item{border-left:2px solid var(--line2);padding:2px 0 12px 12px;margin-left:4px;position:relative;}
-.mma-tl-item::before{content:'';position:absolute;left:-5px;top:4px;width:8px;height:8px;border-radius:50%;background:var(--red);}
-.mma-tl-date{font-size:12px;font-weight:700;color:var(--t1);margin-bottom:8px;}
-.mma-tl-note{margin-bottom:8px;}
-.mma-tl-note:last-child{margin-bottom:0;}
-.mma-tl-lbl{font-size:10px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;}
-.mma-tl-txt{font-size:13px;color:var(--t1);line-height:1.45;white-space:pre-wrap;word-break:break-word;}
-.mma-empty{padding:28px 16px;text-align:center;color:var(--t3);font-size:13px;line-height:1.5;}
 
 /* PROGRESS CHART */
 .chart-select{width:100%;padding:9px 13px;background:var(--bg3);border:0.5px solid var(--line2);border-radius:var(--r-sm);color:var(--t1);font-family:var(--font);font-size:13px;margin-bottom:12px;outline:none;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238888a0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;cursor:pointer;}
@@ -677,8 +662,6 @@ const USERS = {
 let currentUser = localStorage.getItem('gg_user')||null;
 let currentTheme = localStorage.getItem('gg_theme')||'default';
 let statsTab = null;
-let statsView = 'general'; // 'general' | 'mma'
-let mmaTagFilter = null;   // null = tüm etiketler
 let weatherData = null;
 let page='home', calMonth=new Date();
 let allCheckins={}, allNotifs=[], unreadNotifs=0;
@@ -1064,7 +1047,7 @@ function renderHome(){
   }
   const u=USERS[currentUser], friend=currentUser==='me'?USERS.friend:USERS.me;
   const today=todayKey(), myCI=getUserCI(today,u.id), frCI=getUserCI(today,friend.id);
-  const myWeeklyStreak=calcWeeklyStreak(u.id), frWeeklyStreak=calcWeeklyStreak(friend.id);
+  const myStreak=calcStreak(u.id), frStreak=calcStreak(friend.id);
   const myWeek=calcWeek(u.id), frWeek=calcWeek(friend.id);
   const dateStr=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
   const wIcon=weatherData?weatherData.icon:'⛅';
@@ -1087,12 +1070,12 @@ function renderHome(){
     </div>
     <div class="asym-grid">
       <div class="asym-streak">
-        <div class="as-label">🔥 HAFTA STREAK</div>
-        <div class="as-num">${myWeeklyStreak}</div>
-        <div class="as-sub">${myWeeklyStreak>0?'HAFTA ÜSTÜSTE!':'Bu hafta 3 antrenman = +1'}</div>
+        <div class="as-label">🔥 STREAK</div>
+        <div class="as-num">${myStreak}</div>
+        <div class="as-sub">HAFTA ÜSTÜSTE!</div>
         <div class="as-divider"></div>
-        <div class="as-mini"><span style="color:${u.color}">${myWeeklyStreak}</span> ${u.initials}</div>
-        <div class="as-mini"><span style="color:${friend.color}">${frWeeklyStreak}</span> ${friend.initials}</div>
+        <div class="as-mini"><span style="color:${u.color}">${myStreak}</span> ${u.initials}</div>
+        <div class="as-mini"><span style="color:${friend.color}">${frStreak}</span> ${friend.initials}</div>
       </div>
       <div class="asym-uc ${myCI?'done':''}" style="--uc-color:${u.color}">
         <div class="uc-av" style="background:transparent;color:${u.color}">${u.initials}</div>
@@ -1113,11 +1096,11 @@ function renderHome(){
     <div class="wk-grid">
       <div class="wk-box">
         <div class="wk-n" style="color:${u.color}">${myWeek}</div>
-        <div class="wk-l">Enikgül</div>
+        <div class="wk-l">Ceyhun</div>
       </div>
       <div class="wk-box">
         <div class="wk-n" style="color:${friend.color}">${frWeek}</div>
-        <div class="wk-l">Eniş</div>
+        <div class="wk-l">Anastasia</div>
       </div>
     </div>
     <button class="hw-start-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ BAŞLA':'+ BAŞLA'}</button>
@@ -1470,13 +1453,6 @@ function renderCalendar(){
 function renderStats(){
   const el=document.getElementById('app');
   if(!statsTab)statsTab=currentUser||'me';
-  const meHasMma=getCIForUser(USERS.me.id).some(c=>c.type==='mma');
-  if(statsView==='mma'&&!meHasMma)statsView='general';
-  const viewToggle=meHasMma?`<div class="stats-view-toggle">
-    <button class="svt-btn${statsView!=='mma'?' active':''}" onclick="G.setStatsView('general')">Genel</button>
-    <button class="svt-btn mma${statsView==='mma'?' active':''}" onclick="G.setStatsView('mma')">🥊 MMA</button>
-  </div>`:'';
-  if(statsView==='mma'){renderStatsMma(el,viewToggle);return;}
   const rows=Object.entries(USERS).map(([key,u])=>{
     const cis=getCIForUser(u.id);
     const streak=calcStreak(u.id),maxStreak=calcMaxStreak(u.id),week=calcWeek(u.id);
@@ -1494,7 +1470,6 @@ function renderStats(){
   });
   const r=rows.find(row=>row.key===statsTab)||rows[0];
   el.innerHTML=`<div class="page">
-    ${viewToggle}
     <div class="sec-label">Genel</div>
     <div class="stat-row">
       ${rows.map(row=>`<div class="stat-box">
@@ -1531,70 +1506,6 @@ function renderStats(){
     </div></div>`:''}
     <div class="sec-label" style="color:${r.u.color}">${r.u.name} · İlerleme</div>
     <div class="card">${renderProgressChart(r.u.id,r.u.color,r.key)}</div>
-  </div>`;
-}
-
-function setStatsView(v){statsView=v;mmaTagFilter=null;renderStats();}
-function setMmaTagFilter(t){mmaTagFilter=t||null;renderStats();}
-function renderStatsMma(el,viewToggle){
-  const me=USERS.me;
-  const today=todayKey();
-  const jsq=s=>esc(JSON.stringify(String(s==null?'':s)));
-  const dlabel=dk=>dk===today?'Bugün':new Date(dk+'T12:00:00').toLocaleDateString('tr-TR',{day:'numeric',month:'long',year:'numeric'});
-  const mmaCIs=getCIForUser(me.id).filter(c=>c.type==='mma')
-    .sort((a,b)=>a.dateKey<b.dateKey?1:a.dateKey>b.dateKey?-1:0); // en yeni önce
-  if(!mmaCIs.length){
-    el.innerHTML=`<div class="page">${viewToggle}<div class="card"><div class="mma-empty">Henüz MMA antrenmanı yok.<br>Antrenman sekmesinden 🥊 MMA seçerek başla.</div></div></div>`;
-    return;
-  }
-  const allVideos=[];
-  mmaCIs.forEach(ci=>((ci.mma&&ci.mma.videos)||[]).forEach(v=>allVideos.push({...v,dateKey:ci.dateKey})));
-  const thisMonth=mmaCIs.filter(ci=>(ci.dateKey||'').startsWith(today.slice(0,7))).length;
-  const tagCounts={};
-  allVideos.forEach(v=>(v.tags||[]).forEach(t=>{
-    const k=String(t).toLowerCase().trim();if(!k)return;
-    if(!tagCounts[k])tagCounts[k]={label:t,count:0};
-    tagCounts[k].count++;
-  }));
-  const tagList=Object.values(tagCounts).sort((a,b)=>b.count-a.count);
-  const maxTag=tagList.length?tagList[0].count:1;
-  const latestWorkOn=(()=>{for(const ci of mmaCIs){const w=ci.mma&&ci.mma.workOn;if(w&&String(w).trim())return{txt:w,dk:ci.dateKey};}return null;})();
-  const filterActive=mmaTagFilter;
-  const filtered=filterActive?allVideos.filter(v=>(v.tags||[]).some(t=>String(t).toLowerCase()===String(filterActive).toLowerCase())):allVideos;
-  const filterChips=`<div class="mma-chip-row" style="margin-bottom:12px">
-    <button class="mma-chip${!filterActive?' active':''}" onclick="G.setMmaTagFilter('')">Tümü (${allVideos.length})</button>
-    ${tagList.map(t=>`<button class="mma-chip${filterActive&&String(filterActive).toLowerCase()===t.label.toLowerCase()?' active':''}" onclick="G.setMmaTagFilter(${jsq(t.label)})">${esc(t.label)} (${t.count})</button>`).join('')}
-  </div>`;
-  const notesHtml=(()=>{
-    const items=mmaCIs.map(ci=>{
-      const mm=ci.mma||{};
-      const note=(lbl,val)=>val&&String(val).trim()?`<div class="mma-tl-note"><div class="mma-tl-lbl">${lbl}</div><div class="mma-tl-txt">${esc(val)}</div></div>`:'';
-      const body=note('Öğrendim',mm.learned)+note('Hatalar',mm.mistakes)+note('Çalışılacak',mm.workOn);
-      return body?`<div class="mma-tl-item"><div class="mma-tl-date">${dlabel(ci.dateKey)}</div>${body}</div>`:'';
-    }).filter(Boolean).join('');
-    return items?`<div class="card"><div class="card-pad">${items}</div></div>`:`<div class="card"><div class="mma-empty">Henüz not yazılmamış.</div></div>`;
-  })();
-  el.innerHTML=`<div class="page">
-    ${viewToggle}
-    <div class="sec-label">MMA Özeti</div>
-    <div class="stat-row">
-      <div class="stat-box"><div class="stat-n" style="color:var(--red)">${mmaCIs.length}</div><div class="stat-l">antrenman</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:var(--red)">${allVideos.length}</div><div class="stat-l">video</div></div>
-      <div class="stat-box"><div class="stat-n" style="color:var(--red)">${thisMonth}</div><div class="stat-l">bu ay</div></div>
-    </div>
-    ${latestWorkOn?`<div class="card"><div class="card-pad"><div class="card-title">🎯 Şu an üzerinde çalışılacaklar</div><div class="mma-note-text">${esc(latestWorkOn.txt)}</div><div class="mma-lib-date" style="margin-top:8px">${dlabel(latestWorkOn.dk)}</div></div></div>`:''}
-    ${tagList.length?`<div class="card"><div class="card-pad"><div class="card-title">Etiket Dağılımı</div>
-      ${tagList.map(t=>`<div class="move-bar-row">
-        <div class="mbr-name">${esc(t.label)}</div>
-        <div class="mbr-track"><div class="mbr-fill" style="width:${Math.round((t.count/maxTag)*100)}%;background:var(--red)"></div></div>
-        <div class="mbr-count">${t.count}×</div>
-      </div>`).join('')}
-    </div></div>`:''}
-    <div class="sec-label">Video Kütüphanesi${filterActive?' · '+esc(filterActive):''}</div>
-    ${allVideos.length?filterChips:''}
-    ${allVideos.length?(filtered.length?filtered.map(v=>`<div class="mma-lib-date">${dlabel(v.dateKey)}</div>${mmaVideoCard(v,false,0)}`).join(''):`<div class="card"><div class="mma-empty">Bu etikette video yok.</div></div>`):`<div class="card"><div class="mma-empty">Henüz video eklenmemiş.</div></div>`}
-    <div class="sec-label">Not Günlüğü</div>
-    ${notesHtml}
   </div>`;
 }
 
@@ -2037,13 +1948,13 @@ window.G={
   setChartExercise,setChartRange,showChartTip,hideChartTip,
   showWeekBadge,
   cycleTheme,
-  switchStatsTab,setStatsView,setMmaTagFilter,
+  switchStatsTab,
   debugWeekCount(){ const u=USERS[currentUser]; console.log('weekBefore:',calcWeek(u.id),'calcWeeklyStreak:',calcWeeklyStreak(u.id)); }
 };
 
 setTheme(currentTheme);
 fetchWeather();
-loadSession();
+éloadSession();
 listenAll();
 renderCurrent();
 </script>

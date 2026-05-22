@@ -590,9 +590,9 @@ html[data-theme="arcade"] .hw-corner{background:rgba(255,255,255,0.5);}
   <div class="sheet">
     <div class="sheet-title" id="sheet-move-name"></div>
     <div class="sheet-prev" id="sheet-prev-info"></div>
-    <div class="f-grid" style="grid-template-columns:1fr 1fr">
+    <div class="f-grid" id="f-top-grid" style="grid-template-columns:1fr 1fr">
       <div><label class="f-label">Set</label><input class="f-input" id="f-sets" type="number" placeholder="3" min="1" max="20" oninput="G.updateRepInputs()"></div>
-      <div><label class="f-label">Ağırlık kg</label><input class="f-input" id="f-weight" type="number" placeholder="—" min="0" step="0.5"></div>
+      <div id="f-weight-wrap"><label class="f-label">Ağırlık kg</label><input class="f-input" id="f-weight" type="number" placeholder="—" min="0" step="0.5"></div>
     </div>
     <div class="f-row" id="f-reps-section"></div>
     <div class="f-row">
@@ -670,7 +670,12 @@ let activeCommentInput=null;
 let chartExercise={};
 let chartRange={me:'all',friend:'all'};
 let toastedNotifIds = new Set(JSON.parse(localStorage.getItem('gg_toasted')||'[]'));
+const BODYWEIGHT_MOVES=['Pull Up'];
+function isBodyweight(name){return BODYWEIGHT_MOVES.includes(name);}
 let prRecords = JSON.parse(localStorage.getItem('gg_prs')||'{}');
+// Bodyweight hareketler ağırlık PR'ı tutmaz — eski hatalı kayıtları (ör. Pull Up 655kg) temizle
+Object.keys(prRecords).forEach(k=>{if(BODYWEIGHT_MOVES.some(n=>k.endsWith('_'+n)))delete prRecords[k];});
+localStorage.setItem('gg_prs',JSON.stringify(prRecords));
 const APP_PIN='2003';
 const PIN_OK_KEY='gg_pin_ok';
 const PIN_LOCK_KEY='gg_pin_lock_until';
@@ -686,7 +691,7 @@ function rebuildPRsFromCheckins(){
   Object.values(allCheckins).forEach(ci=>{
     if(!ci||!ci.userId||!Array.isArray(ci.moves))return;
     ci.moves.forEach(m=>{
-      if(!m||!m.name)return;
+      if(!m||!m.name||isBodyweight(m.name))return;
       const w=parseFloat(m.weight);
       if(!Number.isFinite(w)||w<=0)return;
       const k=ci.userId+'_'+m.name;
@@ -698,6 +703,7 @@ function rebuildPRsFromCheckins(){
 }
 
 function checkPR(uid,moveName,weight){
+  if(isBodyweight(moveName))return false;
   const w=parseFloat(weight);
   if(!Number.isFinite(w)||w<=0)return false;
   const k=uid+'_'+moveName, prev=prRecords[k]||0;
@@ -1613,7 +1619,7 @@ function showDay(dk){
         return `<div class="modal-mv">
           <div class="modal-mv-row">
             <div class="modal-mv-name">${m.name}</div>
-            <div class="modal-mv-meta">${m.sets}×${m.reps}${m.weight?' · '+m.weight+'kg':''}</div>
+            <div class="modal-mv-meta">${m.sets}×${m.reps}${(!isBodyweight(m.name)&&m.weight)?' · '+m.weight+'kg':''}</div>
             <div class="diff-tag ${m.diff}" style="font-size:10px">${m.diff==='easy'?'Kolay':m.diff==='medium'?'Orta':'Zor'}</div>
           </div>
           ${warmupStr?'<div class="mr-warmup">🔥 Isınma: '+warmupStr+'</div>':''}
@@ -1867,7 +1873,7 @@ function openSheet(idx){
   const prevEl=document.getElementById('sheet-prev-info');
   if(prevEl){
     if(lastMove){
-      const lastWeight=(lastMove.weight!==null&&lastMove.weight!==undefined&&lastMove.weight!=='')?` · ${lastMove.weight}kg`:'';
+      const lastWeight=(!isBodyweight(m.name)&&lastMove.weight!==null&&lastMove.weight!==undefined&&lastMove.weight!=='')?` · ${lastMove.weight}kg`:'';
       const prVal=prRecords[prKey];
       prevEl.innerHTML=`<div>Geçen: ${lastMove.sets}×${lastMove.reps}${lastWeight}</div><div>PR: ${prVal>0?prVal+'kg':'-'}</div>`;
       prevEl.style.display='block';
@@ -1878,6 +1884,11 @@ function openSheet(idx){
   }
   document.getElementById('f-sets').value=m.sets||'';
   document.getElementById('f-weight').value=m.weight||'';
+  const bw=isBodyweight(m.name);
+  const topGrid=document.getElementById('f-top-grid');if(topGrid)topGrid.style.gridTemplateColumns=bw?'1fr':'1fr 1fr';
+  const wWrap=document.getElementById('f-weight-wrap');if(wWrap)wWrap.style.display=bw?'none':'';
+  const wuRow=document.getElementById('f-warmup-row');if(wuRow)wuRow.style.display=bw?'none':'';
+  const exRow=document.getElementById('f-extra-row');if(exRow)exRow.style.display=bw?'none':'';
   formDiff=m.diff||'medium';
   G.selDiff(formDiff);
   const noteEl=document.getElementById('f-note');
@@ -1911,14 +1922,15 @@ function saveMove(){
   // sync empty boxes visually
   repInputs.forEach((el,i)=>{if(!el.value&&repsPerSet[i])el.value=repsPerSet[i];});
   const reps=repsPerSet[0];
-  const weight=parseFloat(document.getElementById('f-weight').value)||null;
+  const bw=isBodyweight(session.moves[formMoveIdx].name);
+  const weight=bw?null:(parseFloat(document.getElementById('f-weight').value)||null);
   const note=(document.getElementById('f-note')?.value||'').trim()||null;
   const wuRows=[...document.querySelectorAll('.warmup-set-row')];
   const warmupArr=wuRows.map(row=>({weight:parseFloat(row.querySelector('.wu-w')?.value)||null,reps:parseInt(row.querySelector('.wu-r')?.value)||null})).filter(w=>w.weight||w.reps);
-  const warmup=warmupArr.length?warmupArr:null;
+  const warmup=bw?null:(warmupArr.length?warmupArr:null);
   const esRows=[...document.querySelectorAll('.extra-set-row')];
   const extraArr=esRows.map(row=>({sets:parseInt(row.querySelector('.es-s')?.value)||null,reps:parseInt(row.querySelector('.es-r')?.value)||null,weight:parseFloat(row.querySelector('.es-w')?.value)||null})).filter(e=>e.sets||e.reps||e.weight);
-  const extraSets=extraArr.length?extraArr:null;
+  const extraSets=bw?null:(extraArr.length?extraArr:null);
   session.moves[formMoveIdx]={...session.moves[formMoveIdx],sets,reps,repsPerSet,weight,diff:formDiff,note,warmup,extraSets,done:true};
   saveSession();
   closeSheet();renderWorkout();

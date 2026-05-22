@@ -711,8 +711,15 @@ function checkPR(uid,moveName,weight){
   return false;
 }
 
-async function saveCheckin(dk,data){try{await setDoc(doc(db,"checkins",dk+"_"+data.userId),{...data,dateKey:dk});}catch(e){console.warn(e);}}
-async function deleteCheckin(dk,uid){try{await deleteDoc(doc(db,"checkins",dk+"_"+uid));}catch(e){console.warn(e);}}
+async function saveCheckin(dk,data){
+  const rec={...data,dateKey:dk};
+  allCheckins[dk+"_"+data.userId]=rec; // optimistic local update so streak/week calcs are correct before the snapshot lands
+  try{await setDoc(doc(db,"checkins",dk+"_"+data.userId),rec);}catch(e){console.warn(e);}
+}
+async function deleteCheckin(dk,uid){
+  delete allCheckins[dk+"_"+uid]; // optimistic local removal
+  try{await deleteDoc(doc(db,"checkins",dk+"_"+uid));}catch(e){console.warn(e);}
+}
 async function saveNotif(n){try{await setDoc(doc(db,"notifs",n.id),n);}catch(e){console.warn(e);}}
 
 function listenAll(){
@@ -1053,7 +1060,7 @@ function renderHome(){
   }
   const u=USERS[currentUser], friend=currentUser==='me'?USERS.friend:USERS.me;
   const today=todayKey(), myCI=getUserCI(today,u.id), frCI=getUserCI(today,friend.id);
-  const myStreak=calcStreak(u.id), frStreak=calcStreak(friend.id);
+  const myStreak=calcWeeklyStreak(u.id), frStreak=calcWeeklyStreak(friend.id); // "HAFTA ÜSTÜSTE!" → consecutive weeks with ≥3 workouts
   const myWeek=calcWeek(u.id), frWeek=calcWeek(friend.id);
   const dateStr=new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
   const wIcon=weatherData?weatherData.icon:'⛅';
@@ -1097,7 +1104,7 @@ function renderHome(){
     <div class="bh-header">
       <div class="bh-accent"></div>
       <div class="bh-title">BU HAFTA</div>
-      <div class="bh-dots"><div class="bh-dot"></div><div class="bh-dot"></div></div>
+      <div class="bh-dots"><div class="bh-dot"></div><d"iv class="bh-dot"></div></div>
     </div>
     <div class="wk-grid">
       <div class="wk-box">
@@ -1109,7 +1116,7 @@ function renderHome(){
         <div class="wk-l">Anastasia</div>
       </div>
     </div>
-    <button class="hw-start-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ BAŞLA':'+ BAŞLA'}</button>
+    <button class="hw-starst-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ BAŞLA':'+ BAŞLA'}</button>
     <button class="switch-link" onclick="G.setUser(null)">Kullanıcı değiştir</button>
   </div>`;
 }
@@ -1793,7 +1800,7 @@ async function finishMma(){
   }
   const saveDate=session.dateKey||todayKey();
   const today=todayKey();
-  const weekBefore=calcWeek(u.id);
+  const weekBefore=calcWeek(u.id), todayAlreadyLogged=!!getUserCI(today,u.id);
   const friend=currentUser==='me'?USERS.friend:USERS.me;
   const data={userId:u.id,userName:u.name,programId:'MMA',type:'mma',dateKey:saveDate,
     mma:mm,moves:[],createdAt:new Date().toISOString()};
@@ -1805,7 +1812,7 @@ async function finishMma(){
     sub:'MMA'+(mm.videos.length?' · '+mm.videos.length+' video':''),targetUserId:friend.id,time:Date.now(),seenBy:[u.id]
   };
   await saveNotif(finishNotif);
-  const triggerBadge=saveDate===today && weekBefore+1===3;
+  const triggerBadge=saveDate===today && !todayAlreadyLogged && weekBefore+1===3;
   session=null;saveSession();G.nav('home');
   if(triggerBadge) setTimeout(()=>showWeekBadge(u.color, calcWeeklyStreak(u.id)),120);
 }
@@ -1819,7 +1826,7 @@ async function finishSession(){
   const u=USERS[currentUser],today=todayKey();
   const saveDate=session?.dateKey||today;
   const doneMoves=session.moves.filter(m=>m.done);
-  const weekBefore=calcWeek(u.id);
+  const weekBefore=calcWeek(u.id), todayAlreadyLogged=!!getUserCI(today,u.id);
   if(!doneMoves.length)return;
   const friend=currentUser==='me'?USERS.friend:USERS.me;
   const prNotifs=[];
@@ -1856,7 +1863,7 @@ async function finishSession(){
     seenBy:[u.id]
   };
   await saveNotif(finishNotif);
-  const triggerBadge=saveDate===today && weekBefore+1===3;
+  const triggerBadge=saveDate===today && !todayAlreadyLogged && weekBefore+1===3;
   session=null;saveSession();G.nav('home');
   if(triggerBadge) setTimeout(()=>showWeekBadge(u.color, calcWeeklyStreak(u.id)),120);
 }
@@ -1966,7 +1973,7 @@ window.G={
 
 setTheme(currentTheme);
 fetchWeather();
-éloadSession();
+loadSession();
 listenAll();
 renderCurrent();
 </script>

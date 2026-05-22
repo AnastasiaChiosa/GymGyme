@@ -3,7 +3,10 @@
     "allow": [
       "WebFetch(domain:api.anthropic.com)",
       "Bash(ls *.bin)",
-      "Bash(dir *.bin)"
+      "Bash(dir *.bin)",
+      "Bash(awk 'NR>624 && /<\\\\/script>/{exit} NR>624{print}' index.html)",
+      "Bash(node --check /tmp/gg_script.mjs)",
+      "Read(//tmp/**)"
     ]
   }
 }

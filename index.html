@@ -228,6 +228,13 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .pc-name{font-size:18px;font-weight:800;letter-spacing:-0.5px;margin-bottom:4px;}
 .pc-moves{font-size:12px;color:var(--t3);line-height:1.6;}
 .pc-arrow{font-size:18px;color:var(--t3);flex-shrink:0;}
+.prog-edit-btn{background:none;border:0.5px solid var(--line2);border-radius:var(--r-sm);color:var(--t3);width:30px;height:30px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:color .15s,background .15s;}
+.prog-edit-btn:hover{color:var(--t1);background:var(--bg3);}
+.prog-move-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg3);border-radius:var(--r-sm);}
+.prog-move-row:not(:last-child){margin-bottom:6px;}
+.prog-move-del{background:var(--rbg);border:0.5px solid rgba(240,101,101,0.2);border-radius:var(--r-sm);color:var(--red);width:28px;height:28px;cursor:pointer;font-size:16px;line-height:1;flex-shrink:0;font-family:var(--font);}
+.prog-add-row{display:flex;gap:8px;margin-top:10px;}
+.prog-add-input{flex:1;}
 .session-hdr{background:var(--bg1);border-radius:var(--r-lg);border:0.5px solid var(--line2);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;}
 .sh-title{font-size:20px;font-weight:800;letter-spacing:-0.5px;color:var(--t0);}
 .sh-sub{font-size:12px;color:var(--t3);margin-top:2px;}
@@ -614,7 +621,7 @@ const fbApp = initializeApp(firebaseConfig);
 const db = getFirestore(fbApp);
 enableIndexedDbPersistence(db).catch(()=>{});
 
-const PROGRAMS = {
+let PROGRAMS = {
   C:{
     C1:{moves:["Squat","Seated Row","45° Back Extension","Cable Lateral Raise","Peck Deck","Preacher Curl"]},
     C2:{moves:["Bench Press","Leg Press","Pull Up","Cable Triceps Overhead Extension","Reverse Peck Deck","Reverse Grip EZ Bar Curl"]},
@@ -626,6 +633,29 @@ const PROGRAMS = {
     A3:{moves:["Bench Press","Barfiks (Bant Destekli)","Reverse Grip EZ Bar Curl","Hip Abduction","Hip Adduction","Incline Bench Press","Cable Triceps Overhead Extension","Cable Crunch"]}
   }
 };
+
+function loadCustomPrograms(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('gg_custom_programs')||'null');
+    if(saved){
+      Object.entries(saved).forEach(([pset,progs])=>{
+        if(PROGRAMS[pset]){
+          Object.entries(progs).forEach(([pid,p])=>{
+            if(PROGRAMS[pset][pid]&&Array.isArray(p.moves))PROGRAMS[pset][pid].moves=p.moves;
+          });
+        }
+      });
+    }
+  }catch(e){}
+}
+function saveCustomPrograms(){
+  const out={};
+  Object.entries(PROGRAMS).forEach(([pset,progs])=>{
+    out[pset]={};
+    Object.entries(progs).forEach(([pid,p])=>{out[pset][pid]={moves:[...p.moves]};});
+  });
+  localStorage.setItem('gg_custom_programs',JSON.stringify(out));
+}
 
 const USERS = {
   me:    {id:"user_me",    name:"Ceyhun",   pset:"C",color:"#7c6af7",clight:"rgba(124,106,247,0.15)",initials:"CY"},
@@ -1231,6 +1261,7 @@ function renderWorkout(){
             <div class="pc-name" style="color:${u.color}">${pid}</div>
             <div class="pc-moves">${p.moves.join(' · ')}</div>
           </div>
+          <button class="prog-edit-btn" onclick="event.stopPropagation();G.openProgramEditor('${u.pset}','${pid}')" title="Programı düzenle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
           <div class="pc-arrow">›</div>
         </div>`).join('')}
       ${isA?`<div class="sec-label" style="margin-top:4px">Kardiyo</div>
@@ -1712,6 +1743,43 @@ function saveMove(){
   closeSheet();renderWorkout();
 }
 
+function renderProgramEditMoves(pset,pid){
+  const moves=PROGRAMS[pset][pid].moves;
+  if(!moves.length)return'<div class="empty-msg" style="padding:12px 0">Henüz hareket yok.</div>';
+  return moves.map((name,i)=>`<div class="prog-move-row"><span style="flex:1;font-size:14px;color:var(--t1)">${name}</span><button class="prog-move-del" onclick="G.removeMoveFromProgram('${pset}','${pid}',${i})">×</button></div>`).join('');
+}
+function openProgramEditor(pset,pid){
+  const u=USERS[currentUser];
+  document.getElementById('modal-root').innerHTML=`<div class="modal-overlay" onclick="G.closeModal()"><div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">✏️ ${pid} — Hareketleri Düzenle</div>
+    <div id="prog-edit-moves">${renderProgramEditMoves(pset,pid)}</div>
+    <div class="prog-add-row">
+      <input class="f-input prog-add-input" id="new-move-input" type="text" placeholder="Yeni hareket adı..." autocomplete="off">
+      <button class="f-save" style="background:${u.color};flex:0;white-space:nowrap;padding:10px 16px" onclick="G.addMoveToProgram('${pset}','${pid}')">+ Ekle</button>
+    </div>
+    <button class="modal-close" onclick="G.closeModal()">Kapat</button>
+  </div></div>`;
+  const inp=document.getElementById('new-move-input');
+  if(inp)inp.addEventListener('keydown',e=>{if(e.key==='Enter')G.addMoveToProgram(pset,pid);});
+}
+function addMoveToProgram(pset,pid){
+  const inp=document.getElementById('new-move-input');
+  const name=(inp?.value||'').trim();
+  if(!name)return;
+  PROGRAMS[pset][pid].moves.push(name);
+  saveCustomPrograms();
+  inp.value='';
+  const el=document.getElementById('prog-edit-moves');
+  if(el)el.innerHTML=renderProgramEditMoves(pset,pid);
+  inp.focus();
+}
+function removeMoveFromProgram(pset,pid,idx){
+  PROGRAMS[pset][pid].moves.splice(idx,1);
+  saveCustomPrograms();
+  const el=document.getElementById('prog-edit-moves');
+  if(el)el.innerHTML=renderProgramEditMoves(pset,pid);
+}
+
 window.G={
   nav(p){
     page=p;
@@ -1727,6 +1795,7 @@ window.G={
   },
   chMonth(d){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+d,1);renderCalendar();},
   showDay,closeModal(){document.getElementById('modal-root').innerHTML='';},
+  openProgramEditor,addMoveToProgram,removeMoveFromProgram,
   startSession,cancelSession,clearSession,finishSession,openHistoryEntry,startHistorySession,
   startCardio,setCardioType,finishCardio,
   openSheet,closeSheet,selDiff,saveMove,submitPin,selectPinUser,
@@ -1741,6 +1810,7 @@ window.G={
 
 setTheme(currentTheme);
 fetchWeather();
+loadCustomPrograms();
 loadSession();
 listenAll();
 renderCurrent();

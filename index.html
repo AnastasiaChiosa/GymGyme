@@ -788,7 +788,7 @@ function listenAll(){
     allNotifs=fresh;
     let unread=0;
     fresh.forEach(n=>{
-      const forMe=!n.replyTo&&(!n.targetUserId||n.targetUserId===myId);
+      const forMe=!n.replyTo;
       const seen=n.seenBy&&n.seenBy.includes(myId);
       if(forMe&&!seen){
         unread++;
@@ -1682,7 +1682,7 @@ function renderNotifs(){
     const pip=document.getElementById('notif-pip');if(pip)pip.classList.remove('show');
   }
   const myId=currentUser?USERS[currentUser].id:null;
-  const visible=allNotifs.filter(n=>!n.replyTo&&(!n.targetUserId||n.targetUserId===myId));
+  const visible=allNotifs.filter(n=>!n.replyTo);
   const getReplies=nid=>allNotifs.filter(n=>n.replyTo===nid).sort((a,b)=>a.time-b.time);
   const myReaction=nid=>{if(!myId)return null;return allNotifs.find(n=>n.replyTo===nid&&n.type==='reaction'&&n.fromUserId===myId)?.emoji||null;};
   el.innerHTML=`<div class="page">

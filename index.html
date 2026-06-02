@@ -143,19 +143,21 @@ body{font-family:var(--font);color:var(--t1);display:flex;justify-content:center
 .notif-text strong{color:var(--t0);font-weight:600;}
 .notif-time{font-size:11px;color:var(--t3);margin-top:2px;}
 .notif-empty{padding:24px;text-align:center;color:var(--t3);font-size:13px;}
-.notif-replies{margin-top:7px;display:flex;flex-wrap:wrap;gap:5px;}
+.notif-reactions{margin-top:6px;display:flex;flex-wrap:wrap;gap:5px;}
 .nr-reaction{display:inline-flex;align-items:center;gap:4px;background:var(--bg3);border:0.5px solid var(--line2);border-radius:20px;padding:3px 9px;font-size:12px;color:var(--t2);}
-.nr-comment{background:var(--bg3);border-radius:10px;padding:7px 10px;font-size:12px;color:var(--t1);width:100%;line-height:1.4;}
-.nr-from{font-size:10px;color:var(--t3);margin-bottom:2px;font-weight:600;}
-.notif-action-row{display:flex;align-items:center;gap:5px;margin-top:8px;}
-.na-emoji{width:34px;height:30px;border:0.5px solid var(--line2);border-radius:8px;background:var(--bg3);font-size:15px;cursor:pointer;font-family:var(--font);transition:transform .1s,background .1s;}
+.notif-action-row{display:flex;align-items:center;gap:5px;margin-top:7px;}
+.na-emoji{width:34px;height:28px;border:0.5px solid var(--line2);border-radius:8px;background:var(--bg3);font-size:15px;cursor:pointer;font-family:var(--font);transition:transform .1s,background .1s;}
 .na-emoji:active{transform:scale(0.88);background:var(--bg4);}
-.na-comment-btn{flex:1;height:30px;border:0.5px solid var(--line2);border-radius:8px;background:var(--bg3);color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--font);padding:0 10px;text-align:left;transition:color .15s;}
-.na-comment-btn.open{color:var(--accent2);border-color:var(--accent);}
-.notif-comment-form{display:flex;gap:6px;margin-top:7px;}
-.nc-input{flex:1;background:var(--bg3);border:0.5px solid var(--line2);border-radius:8px;padding:8px 10px;color:var(--t0);font-size:13px;font-family:var(--font);outline:none;}
+.na-comment-btn{height:26px;border:0.5px solid var(--line2);border-radius:20px;background:var(--bg3);color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--font);padding:0 10px;margin-left:auto;transition:color .15s,border-color .15s,background .15s;}
+.na-comment-btn.open{color:var(--accent2);border-color:var(--accent);background:var(--abg);}
+.nc-comments-section{margin-top:8px;border-top:0.5px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:7px;}
+.nc-comment-item{display:flex;gap:6px;align-items:baseline;}
+.nc-from{font-size:11px;font-weight:700;color:var(--t2);flex-shrink:0;white-space:nowrap;}
+.nc-text{font-size:13px;color:var(--t1);line-height:1.4;}
+.notif-comment-form{display:flex;gap:6px;}
+.nc-input{flex:1;background:var(--bg3);border:0.5px solid var(--line2);border-radius:8px;padding:7px 10px;color:var(--t0);font-size:13px;font-family:var(--font);outline:none;}
 .nc-input:focus{border-color:var(--accent);}
-.nc-send{padding:0 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:13px;font-family:var(--font);font-weight:600;}
+.nc-send{width:34px;height:34px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:16px;font-family:var(--font);flex-shrink:0;}
 
 /* TOAST */
 .toast-wrap{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none;width:100%;max-width:400px;padding:0 16px;}
@@ -1690,14 +1692,33 @@ function renderNotifs(){
         ?`<div class="notif-empty">Henüz bildirim yok.<br>Ağırlık rekoru kırınca burada görünür 🏆</div>`
         :`<div class="notif-list">${visible.map(n=>{
           const isWorkout=n.type==='workout'||n.icon==='💪';
-          const replies=isWorkout?getReplies(n.id):[];
+          const allReplies=getReplies(n.id);
+          const reactions=allReplies.filter(r=>r.type==='reaction');
+          const comments=allReplies.filter(r=>r.type==='comment');
           const myReact=isWorkout?myReaction(n.id):null;
-          const repliesHTML=replies.length?`<div class="notif-replies">${replies.map(r=>
-            r.type==='reaction'
-              ?`<span class="nr-reaction">${r.emoji} <span>${r.fromUserName}</span></span>`
-              :`<div class="nr-comment"><div class="nr-from">${r.fromUserName}</div>${r.commentText||''}</div>`
-          ).join('')}</div>`:'';
-          const actionHTML=isWorkout&&currentUser?`<div class="notif-action-row">${['💪','🔥','👏','😤'].map(e=>`<button class="na-emoji${myReact===e?' na-active':''}" style="${myReact===e?'background:var(--abg);border-color:var(--accent);':''}" onclick="G.sendReactionInline('${n.id}','${e}')">${e}</button>`).join('')}<button class="na-comment-btn${activeCommentInput===n.id?' open':''}" onclick="G.toggleCommentInput('${n.id}')">✏️ Yorum</button></div>${activeCommentInput===n.id?`<div class="notif-comment-form"><input class="nc-input" id="nc-input-${n.id}" type="text" placeholder="Bir şeyler yaz..." onkeydown="if(event.key==='Enter')G.sendCommentInline('${n.id}')"><button class="nc-send" onclick="G.sendCommentInline('${n.id}')">Gönder</button></div>`:''}`:'';          return`<div class="notif-item" style="flex-direction:column;align-items:stretch">
+          const isOpen=activeCommentInput===n.id;
+
+          const reactionsHTML=reactions.length
+            ?`<div class="notif-reactions">${reactions.map(r=>`<span class="nr-reaction">${r.emoji} <span>${r.fromUserName}</span></span>`).join('')}</div>`
+            :'';
+
+          const emojiHTML=isWorkout&&currentUser
+            ?['💪','🔥','👏','😤'].map(e=>`<button class="na-emoji${myReact===e?' na-active':''}" style="${myReact===e?'background:var(--abg);border-color:var(--accent);':''}" onclick="G.sendReactionInline('${n.id}','${e}')">${e}</button>`).join('')
+            :'';
+
+          const commentBtn=currentUser
+            ?`<button class="na-comment-btn${isOpen?' open':''}" onclick="G.toggleCommentInput('${n.id}')">💬${comments.length?' '+comments.length:''}</button>`
+            :'';
+
+          const actionHTML=(emojiHTML||commentBtn)
+            ?`<div class="notif-action-row">${emojiHTML}${commentBtn}</div>`
+            :'';
+
+          const commentsHTML=(comments.length||isOpen)
+            ?`<div class="nc-comments-section">${comments.map(c=>`<div class="nc-comment-item"><span class="nc-from">${c.fromUserName}</span><span class="nc-text">${c.commentText||''}</span></div>`).join('')}${isOpen?`<div class="notif-comment-form"><input class="nc-input" id="nc-input-${n.id}" type="text" placeholder="Yorum yaz..." onkeydown="if(event.key==='Enter')G.sendCommentInline('${n.id}')"><button class="nc-send" onclick="G.sendCommentInline('${n.id}')">→</button></div>`:''}</div>`
+            :'';
+
+          return`<div class="notif-item" style="flex-direction:column;align-items:stretch">
             <div style="display:flex;gap:10px;align-items:flex-start">
               <div class="notif-icon" style="background:var(--ambg)">${n.icon}</div>
               <div class="notif-body">
@@ -1705,7 +1726,7 @@ function renderNotifs(){
                 <div class="notif-time">${timeAgo(n.time)}</div>
               </div>
             </div>
-            ${repliesHTML}${actionHTML}
+            ${reactionsHTML}${actionHTML}${commentsHTML}
           </div>`;
         }).join('')}</div>`}
     </div>

@@ -679,6 +679,7 @@ let PROGRAMS = {
   }
 };
 
+const DEFAULT_PROG_IDS=new Set(['C1','C2','C3','A1','A2','A3']);
 function loadCustomPrograms(){
   try{
     const saved=JSON.parse(localStorage.getItem('gg_custom_programs')||'null');
@@ -686,7 +687,7 @@ function loadCustomPrograms(){
       Object.entries(saved).forEach(([pset,progs])=>{
         if(PROGRAMS[pset]){
           Object.entries(progs).forEach(([pid,p])=>{
-            if(PROGRAMS[pset][pid]&&Array.isArray(p.moves))PROGRAMS[pset][pid].moves=p.moves;
+            if(Array.isArray(p.moves))PROGRAMS[pset][pid]={moves:[...p.moves]};
           });
         }
       });
@@ -1159,11 +1160,11 @@ function renderHome(){
     <div class="wk-grid">
       <div class="wk-box">
         <div class="wk-n" style="color:${u.color}">${myWeek}</div>
-        <div class="wk-l">Ceyhun</div>
+        <div class="wk-l">${u.name==='Anastasia'?'Boss':u.name}</div>
       </div>
       <div class="wk-box">
         <div class="wk-n" style="color:${friend.color}">${frWeek}</div>
-        <div class="wk-l">Anastasia</div>
+        <div class="wk-l">${friend.name==='Anastasia'?'Boss':friend.name}</div>
       </div>
     </div>
     <button class="hw-start-btn ${myCI?'done':''}" onclick="G.nav('workout')">${myCI?'✓ BAŞLA':'+ BAŞLA'}</button>
@@ -1360,6 +1361,7 @@ function renderWorkout(){
           </div>
           <div class="pc-arrow">›</div>
         </div>`:''}
+      <button class="btn-ghost" style="border-color:${u.color};color:${u.color}" onclick="G.openNewProgramModal('${u.pset}')">+ Yeni Program Ekle</button>
       <button class="btn-ghost" onclick="G.openHistoryEntry()">Geçmiş antrenman gir</button>
     </div>`;
     return;
@@ -2107,6 +2109,7 @@ function renderProgramEditMoves(pset,pid){
 }
 function openProgramEditor(pset,pid){
   const u=USERS[currentUser];
+  const isCustom=!DEFAULT_PROG_IDS.has(pid);
   document.getElementById('modal-root').innerHTML=`<div class="modal-overlay" onclick="G.closeModal()"><div class="modal" onclick="event.stopPropagation()">
     <div class="modal-title">✏️ ${pid} — Hareketleri Düzenle</div>
     <div id="prog-edit-moves">${renderProgramEditMoves(pset,pid)}</div>
@@ -2114,6 +2117,7 @@ function openProgramEditor(pset,pid){
       <input class="f-input prog-add-input" id="new-move-input" type="text" placeholder="Yeni hareket adı..." autocomplete="off">
       <button class="f-save" style="background:${u.color};flex:0;white-space:nowrap;padding:10px 16px" onclick="G.addMoveToProgram('${pset}','${pid}')">+ Ekle</button>
     </div>
+    ${isCustom?`<button class="btn-danger" style="margin-top:4px" onclick="G.deleteProgram('${pset}','${pid}')">Programı Sil</button>`:''}
     <button class="modal-close" onclick="G.closeModal()">Kapat</button>
   </div></div>`;
   const inp=document.getElementById('new-move-input');
@@ -2136,6 +2140,43 @@ function removeMoveFromProgram(pset,pid,idx){
   const el=document.getElementById('prog-edit-moves');
   if(el)el.innerHTML=renderProgramEditMoves(pset,pid);
 }
+function openNewProgramModal(pset){
+  const u=USERS[currentUser];
+  document.getElementById('modal-root').innerHTML=`<div class="modal-overlay" onclick="G.closeModal()"><div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">➕ Yeni Program</div>
+    <div style="margin-bottom:16px">
+      <label class="f-label" style="display:block;margin-bottom:6px">Program adı</label>
+      <input class="f-input" id="new-prog-name" type="text" placeholder="Örn: A4, Bacak, Güç..." maxlength="20" autocomplete="off">
+      <div id="new-prog-err" style="color:var(--red);font-size:12px;margin-top:4px;display:none">Bu isimde program zaten var.</div>
+    </div>
+    <button class="f-save" style="background:${u.color};margin-bottom:8px" onclick="G.createNewProgram('${pset}')">Oluştur &amp; Düzenle</button>
+    <button class="modal-close" onclick="G.closeModal()">İptal</button>
+  </div></div>`;
+  const inp=document.getElementById('new-prog-name');
+  if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')G.createNewProgram(pset);});}
+}
+function createNewProgram(pset){
+  const inp=document.getElementById('new-prog-name');
+  const err=document.getElementById('new-prog-err');
+  const name=(inp?.value||'').trim();
+  if(!name){if(inp)inp.focus();return;}
+  if(PROGRAMS[pset][name]){
+    if(inp)inp.style.borderColor='var(--red)';
+    if(err)err.style.display='block';
+    return;
+  }
+  PROGRAMS[pset][name]={moves:[]};
+  saveCustomPrograms();
+  renderWorkout();
+  openProgramEditor(pset,name);
+}
+function deleteProgram(pset,pid){
+  if(!confirm(`"${pid}" programını kalıcı olarak silmek istiyor musun?`))return;
+  delete PROGRAMS[pset][pid];
+  saveCustomPrograms();
+  closeModal();
+  renderWorkout();
+}
 
 window.G={
   nav(p){
@@ -2152,7 +2193,7 @@ window.G={
   },
   chMonth(d){calMonth=new Date(calMonth.getFullYear(),calMonth.getMonth()+d,1);renderCalendar();},
   showDay,closeModal(){document.getElementById('modal-root').innerHTML='';},
-  openProgramEditor,addMoveToProgram,removeMoveFromProgram,
+  openProgramEditor,addMoveToProgram,removeMoveFromProgram,openNewProgramModal,createNewProgram,deleteProgram,
   startSession,cancelSession,clearSession,finishSession,openHistoryEntry,startHistorySession,
   startCardio,setCardioType,finishCardio,
   startMma,addMmaVideo,removeMmaVideo,addTagToInput,finishMma,syncMma:syncMmaFields,
